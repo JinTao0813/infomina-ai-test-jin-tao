@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+token-ledger/
+*.py[cod]
+dist/
+.ipynb_checkpoints/
+dataset_tsmc2014/
+AI_Interview_DS_Entropy.pdf
+.DS_Store
