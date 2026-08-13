@@ -5,23 +5,29 @@ description = "Reproducible location entropy analysis of Foursquare check-ins"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "fastapi>=0.115,<1",
   "jupyter>=1.1,<2",
   "matplotlib>=3.9,<4",
   "numpy>=2.0,<3",
   "pandas>=2.2,<3",
   "seaborn>=0.13,<1",
+  "uvicorn[standard]>=0.34,<1",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.3,<10"]
+dev = [
+    "httpx>=0.28,<1",
+    "pytest>=8.3,<10",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/location_entropy"]
+packages = ["src/location_entropy", "services"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
+pythonpath = ["."]
 testpaths = ["tests"]

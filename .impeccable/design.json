@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-13T16:15:00Z",
+  "title": "Design System: Context-Aware Discovery",
+  "extensions": {
+    "colorMeta": {
+      "ink-navy": {"role":"neutral","displayName":"Ink Navy","canonical":"#111c34","tonalRamp":["#080e1a","#111c34","#27344d","#516079","#8f9db3","#c8d2e3","#e6ebf3","#f3f6fb"]},
+      "action-blue": {"role":"primary","displayName":"Action Blue","canonical":"#284bdb","tonalRamp":["#0b1748","#10256f","#1735aa","#284bdb","#5b75e5","#91a2ef","#c6d0f8","#eef1ff"]},
+      "measured-citron": {"role":"secondary","displayName":"Measured Citron","canonical":"#d9f45f","tonalRamp":["#273000","#485500","#6f7e12","#9ab52d","#d9f45f","#e6fa8c","#f1fbbd","#f9fde5"]}
+    },
+    "typographyMeta": {
+      "display": {"displayName":"Workbench Display","purpose":"Page thesis only."},
+      "body": {"displayName":"Interface Body","purpose":"Controls, explanations, and methodology."},
+      "label": {"displayName":"Measurement Label","purpose":"Categories, metadata, and control labels."}
+    },
+    "shadows": [
+      {"name":"workbench-ambient","value":"0 18px 50px rgba(35, 52, 84, 0.10)","purpose":"Lifts the complete workbench; never individual results."}
+    ],
+    "motion": [
+      {"name":"loading-pulse","value":"1.2s ease-in-out alternate","purpose":"Communicates reranking while retaining the list shape."}
+    ],
+    "breakpoints": [
+      {"name":"stack-workbench","value":"900px"},
+      {"name":"compact-mobile","value":"560px"}
+    ]
+  },
+  "components": [
+    {
+      "name":"Selected control",
+      "kind":"button",
+      "refersTo":"action-control",
+      "description":"Selected explicit choice using native input semantics.",
+      "html":"<button class=\"ds-action\">BALANCED</button>",
+      "css":".ds-action{min-height:44px;padding:10px 12px;border:1px solid #284bdb;border-radius:6px;background:#284bdb;color:#fff;font:700 13px ui-sans-serif,system-ui;cursor:pointer}.ds-action:hover{background:#1735aa}.ds-action:focus-visible{outline:3px solid #0b61e8;outline-offset:3px}"
+    },
+    {
+      "name":"Measured readout",
+      "kind":"custom",
+      "refersTo":"measured-readout",
+      "description":"A compact output, never an action.",
+      "html":"<div class=\"ds-readout\"><span>Applied discovery</span><strong>58%</strong></div>",
+      "css":".ds-readout{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 12px;border:1px solid #87961f;border-radius:6px;background:#d9f45f;color:#111c34;font-family:ui-sans-serif,system-ui}.ds-readout span{font-size:11px;font-weight:700}.ds-readout strong{font-size:25px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name":"Ranking row",
+      "kind":"custom",
+      "description":"Comparable result strip with reason before details.",
+      "html":"<article class=\"ds-result\"><b>01</b><div><small>WORKSHOP</small><h3>Common Ground Ceramics</h3><p>A broader activity choice for your weekend setting.</p></div><strong>0.74</strong></article>",
+      "css":".ds-result{display:grid;grid-template-columns:48px 1fr auto;gap:18px;padding:24px 0;border-top:1px solid #c8d2e3;color:#111c34;font-family:ui-sans-serif,system-ui}.ds-result>b,.ds-result small{color:#1735aa;font-size:11px}.ds-result h3{margin:2px 0;font-size:18px}.ds-result p{margin:8px 0 0;color:#233b87;font-size:14px;font-weight:700}.ds-result>strong{font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "northStar":"The Evidence Workbench",
+    "overview":"A cool, precise work surface makes ranking cause-and-effect inspectable. It feels closer to an annotated analysis artifact than a consumer recommendation feed.",
+    "keyCharacteristics":["Cool paper and white working surfaces","Ink-heavy typography with compact labels","One action blue and one measured-output citron","Ruled result strips instead of repeated cards","Explanations adjacent to outcomes"],
+    "rules":[
+      {"name":"The Measured Citron Rule","body":"Citron labels a measured or declared state; it is not decoration and never replaces a textual label.","section":"colors"},
+      {"name":"The One Work Surface Rule","body":"Individual recommendations are ruled rows, never separately elevated cards.","section":"elevation"}
+    ],
+    "dos":["Do keep user intent, confidence, and output visible in the same viewport where practical.","Do label synthetic data and uncertain inference in text.","Do preserve native semantics and visible focus."],
+    "donts":["Don't use entropy as identity, personality, or intent language.","Don't scatter citron as decorative accent.","Don't nest cards or elevate each result independently."]
+  }
+}
