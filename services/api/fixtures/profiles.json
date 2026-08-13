@@ -6,8 +6,12 @@
     "category_entropy": 0.58,
     "weekend_delta": 0.04,
     "observation_count": 180,
-    "confidence": 0.90,
-    "familiar_categories": ["Coffee Shop", "Park", "Bakery"]
+    "confidence": 0.9,
+    "familiar_categories": [
+      "Coffee Shop",
+      "Park",
+      "Bakery"
+    ]
   },
   {
     "id": "mixed",
@@ -17,7 +21,12 @@
     "weekend_delta": 0.06,
     "observation_count": 154,
     "confidence": 0.84,
-    "familiar_categories": ["Coffee Shop", "Noodle House", "Bookshop", "Park"]
+    "familiar_categories": [
+      "Coffee Shop",
+      "Noodle House",
+      "Bookshop",
+      "Park"
+    ]
   },
   {
     "id": "exploration",
@@ -27,7 +36,12 @@
     "weekend_delta": 0.08,
     "observation_count": 240,
     "confidence": 0.94,
-    "familiar_categories": ["Gallery", "Restaurant", "Music Venue", "Park"]
+    "familiar_categories": [
+      "Gallery",
+      "Restaurant",
+      "Music Venue",
+      "Park"
+    ]
   },
   {
     "id": "sparse",
@@ -37,6 +51,8 @@
     "weekend_delta": 0.11,
     "observation_count": 8,
     "confidence": 0.12,
-    "familiar_categories": ["Coffee Shop"]
+    "familiar_categories": [
+      "Coffee Shop"
+    ]
   }
 ]

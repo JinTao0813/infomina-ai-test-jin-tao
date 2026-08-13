@@ -52,14 +52,24 @@ def rank_candidates(
     applied_discovery = calculate_applied_discovery(
         profile, context, discovery_mode
     )
-    recommendations = [
-        _score_candidate(
-            profile, candidate, context, discovery_mode, applied_discovery
+    scored_candidates = [
+        (
+            _calculate_final_score(candidate, applied_discovery),
+            candidate,
         )
         for candidate in candidates
     ]
-    recommendations.sort(key=lambda item: (-item.final_score, item.id))
-    return recommendations[:limit]
+    scored_candidates.sort(key=lambda item: (-item[0], item[1].id))
+    return [
+        _format_recommendation(
+            profile,
+            candidate,
+            context,
+            discovery_mode,
+            exact_score,
+        )
+        for exact_score, candidate in scored_candidates[:limit]
+    ]
 
 
 def ranking_summary(
@@ -82,22 +92,28 @@ def ranking_summary(
     return "Your balanced choice combines relevance with measured venue and activity novelty."
 
 
-def _score_candidate(
-    profile: Profile,
-    candidate: CandidateVenue,
-    context: Context,
-    discovery_mode: DiscoveryMode,
-    applied_discovery: float,
-) -> Recommendation:
+def _calculate_final_score(
+    candidate: CandidateVenue, applied_discovery: float
+) -> float:
     novelty_score = 0.60 * candidate.venue_novelty + 0.40 * candidate.category_novelty
-    final_score = (
+    return (
         (1 - applied_discovery) * candidate.baseline_relevance
         + applied_discovery * novelty_score
         - 0.15 * candidate.distance_penalty
     )
+
+
+def _format_recommendation(
+    profile: Profile,
+    candidate: CandidateVenue,
+    context: Context,
+    discovery_mode: DiscoveryMode,
+    exact_score: float,
+) -> Recommendation:
+    novelty_score = 0.60 * candidate.venue_novelty + 0.40 * candidate.category_novelty
     return Recommendation(
         **candidate.model_dump(),
-        final_score=round(final_score, 4),
+        final_score=round(exact_score, 4),
         novelty_score=round(novelty_score, 4),
         reason=_explain(profile, candidate, context, discovery_mode),
     )

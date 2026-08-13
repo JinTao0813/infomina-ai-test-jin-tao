@@ -108,6 +108,43 @@ def test_ranking_is_deterministic_and_candidate_id_breaks_ties(
 client = TestClient(app)
 
 
+def test_ordering_uses_unrounded_scores_before_tie_breaking(
+    routine_profile: Profile,
+) -> None:
+    candidates = [
+        CandidateVenue(
+            id="venue-b",
+            name="Higher exact score",
+            category="Park",
+            description="Fictional venue.",
+            baseline_relevance=0.5,
+            venue_novelty=0.5,
+            category_novelty=0.5,
+            distance_penalty=0,
+        ),
+        CandidateVenue(
+            id="venue-a",
+            name="Lower exact score",
+            category="Park",
+            description="Fictional venue.",
+            baseline_relevance=0.4999,
+            venue_novelty=0.5,
+            category_novelty=0.5,
+            distance_penalty=0,
+        ),
+    ]
+
+    result = rank_candidates(
+        profile=routine_profile,
+        candidates=candidates,
+        context=Context.WEEKDAY,
+        discovery_mode=DiscoveryMode.BALANCED,
+        limit=2,
+    )
+
+    assert [item.id for item in result] == ["venue-b", "venue-a"]
+
+
 def test_recommendations_validate_request_and_unknown_profile() -> None:
     invalid = client.post(
         "/recommendations",
