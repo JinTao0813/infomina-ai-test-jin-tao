@@ -7,4 +7,6 @@ dist/
 .ipynb_checkpoints/
 dataset_tsmc2014/
 AI_Interview_DS_Entropy.pdf
+SPEC.md
+teach/
 .DS_Store

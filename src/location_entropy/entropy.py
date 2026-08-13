@@ -1,15 +1,12 @@
 """Vectorized Shannon entropy calculations."""
 
 from collections.abc import Sequence
-from numbers import Real
 
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_bool_dtype, is_numeric_dtype
 
 METRIC_COLUMNS = [
     "observation_count",
-    "total_weight",
     "unique_location_count",
     "entropy",
     "normalized_entropy",
@@ -25,36 +22,18 @@ def _as_group_columns(group_cols: str | Sequence[str]) -> list[str]:
     return columns
 
 
-def _validate_log_base(log_base: float) -> float:
-    base = (
-        float(log_base)
-        if isinstance(log_base, Real) and not isinstance(log_base, bool)
-        else np.nan
-    )
-    if not np.isfinite(base) or base <= 0 or base == 1:
-        raise ValueError(
-            "log_base must be a finite number greater than 0 and not equal to 1"
-        )
-    return base
-
-
 def calculate_location_entropy(
     data: pd.DataFrame,
     group_cols: str | Sequence[str],
     location_col: str,
-    weight_col: str | None = None,
-    log_base: float = np.e,
 ) -> pd.DataFrame:
-    """Calculate Shannon entropy of observed locations for independent groups.
+    """Calculate base-2 location entropy for each independent group.
 
-    ``observation_count`` counts input rows. With weights, ``total_weight`` is
-    their sum and ``unique_location_count`` counts only locations with positive
-    aggregate weight. Groups whose total weight is zero are retained with zero
-    locations and zero entropy.
+    Raw entropy is reported in bits. Normalized entropy is defined as zero for
+    groups with one observed location and otherwise ranges from zero to one.
     """
     groups = _as_group_columns(group_cols)
-    base = _validate_log_base(log_base)
-    required = [*groups, location_col, *([weight_col] if weight_col else [])]
+    required = [*groups, location_col]
     missing = list(
         dict.fromkeys(column for column in required if column not in data.columns)
     )
@@ -74,65 +53,30 @@ def calculate_location_entropy(
             {column: pd.Series(dtype="object") for column in output_columns}
         )
 
-    frame = data[[*groups, location_col]].copy()
-    internal_weight = "__entropy_weight__"
-    while internal_weight in frame.columns:
-        internal_weight = f"_{internal_weight}"
-
-    if weight_col is None:
-        frame[internal_weight] = 1.0
-    else:
-        weights = data[weight_col]
-        if is_bool_dtype(weights.dtype) or not is_numeric_dtype(weights.dtype):
-            raise ValueError(f"weight column '{weight_col}' must be numeric")
-        null_or_nonfinite = weights.isna() | ~np.isfinite(weights)
-        if null_or_nonfinite.any():
-            count = int(null_or_nonfinite.sum())
-            raise ValueError(
-                f"weight column '{weight_col}' must be finite; found {count} invalid value(s)"
-            )
-        negative = weights < 0
-        if negative.any():
-            count = int(negative.sum())
-            raise ValueError(
-                f"weight column '{weight_col}' has negative values; found {count}"
-            )
-        frame[internal_weight] = weights.astype(float)
-
     grouping_options = {"sort": False, "observed": True, "dropna": False}
-    summaries = frame.groupby(groups, as_index=False, **grouping_options).agg(
-        observation_count=(location_col, "size"),
-        total_weight=(internal_weight, "sum"),
+    location_counts = (
+        data.groupby(
+            [*groups, location_col], as_index=False, **grouping_options
+        )
+        .size()
+        .rename(columns={"size": "__location_count__"})
     )
-    location_weights = frame.groupby(
-        [*groups, location_col], as_index=False, **grouping_options
-    )[internal_weight].sum()
-    positive = location_weights[location_weights[internal_weight] > 0].copy()
+    totals = location_counts.groupby(groups, **grouping_options)[
+        "__location_count__"
+    ].transform("sum")
+    probabilities = location_counts["__location_count__"] / totals
+    location_counts["__entropy_component__"] = -probabilities * np.log2(
+        probabilities
+    )
 
-    if positive.empty:
-        metrics = summaries.copy()
-        metrics["unique_location_count"] = 0
-        metrics["entropy"] = 0.0
-    else:
-        totals = summaries[[*groups, "total_weight"]]
-        positive = positive.merge(totals, on=groups, how="left", validate="many_to_one")
-        probabilities = positive[internal_weight] / positive["total_weight"]
-        positive["__entropy_component__"] = -(
-            probabilities * np.log(probabilities) / np.log(base)
-        )
-        distribution = positive.groupby(groups, as_index=False, **grouping_options).agg(
-            unique_location_count=(location_col, "size"),
-            entropy=("__entropy_component__", "sum"),
-        )
-        metrics = summaries.merge(
-            distribution, on=groups, how="left", validate="one_to_one"
-        )
-        metrics["unique_location_count"] = (
-            metrics["unique_location_count"].fillna(0).astype(int)
-        )
-        metrics["entropy"] = metrics["entropy"].fillna(0.0)
-
-    denominator = np.log(metrics["unique_location_count"].clip(lower=1)) / np.log(base)
+    metrics = location_counts.groupby(
+        groups, as_index=False, **grouping_options
+    ).agg(
+        observation_count=("__location_count__", "sum"),
+        unique_location_count=(location_col, "size"),
+        entropy=("__entropy_component__", "sum"),
+    )
+    denominator = np.log2(metrics["unique_location_count"].clip(lower=1))
     metrics["normalized_entropy"] = np.where(
         metrics["unique_location_count"] > 1,
         metrics["entropy"] / denominator,
