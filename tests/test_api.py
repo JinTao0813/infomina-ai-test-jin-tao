@@ -270,6 +270,7 @@ def test_sparse_profile_returns_neutral_fallback_explanation() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["uses_neutral_fallback"] is True
+    assert payload["applied_discovery"] == pytest.approx(0.5)
     assert "limited history" in payload["ranking_summary"].lower()
     assert all(
         "limited history" in item["reason"].lower()

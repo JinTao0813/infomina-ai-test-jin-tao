@@ -23,13 +23,16 @@ def calculate_applied_discovery(
 ) -> float:
     """Apply documented confidence and context adjustments."""
     inferred_discovery = 0.60 * profile.venue_entropy + 0.40 * profile.category_entropy
+    is_sparse = profile.confidence < SPARSE_CONFIDENCE_THRESHOLD
     confidence_adjusted = (
-        profile.confidence * inferred_discovery
+        0.50
+        if is_sparse
+        else profile.confidence * inferred_discovery
         + (1 - profile.confidence) * 0.50
     )
     context_adjustment = (
         profile.confidence * profile.weekend_delta
-        if context is Context.WEEKEND
+        if context is Context.WEEKEND and not is_sparse
         else 0.0
     )
     applied = (
