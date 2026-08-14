@@ -19,7 +19,7 @@ PROFILES = [
         "weekend_delta": 0.04,
         "observation_count": 180,
         "confidence": 0.90,
-        "familiar_categories": ["Coffee Shop", "Park", "Bakery"],
+        "familiar_categories": ["Train Station", "Coffee Shop", "Building"],
     },
     {
         "id": "mixed",
@@ -31,9 +31,9 @@ PROFILES = [
         "confidence": 0.84,
         "familiar_categories": [
             "Coffee Shop",
-            "Noodle House",
-            "Bookshop",
-            "Park",
+            "Train Station",
+            "Burger Joint",
+            "Building",
         ],
     },
     {
@@ -44,7 +44,7 @@ PROFILES = [
         "weekend_delta": 0.08,
         "observation_count": 240,
         "confidence": 0.94,
-        "familiar_categories": ["Gallery", "Restaurant", "Music Venue", "Park"],
+        "familiar_categories": ["Concert Hall", "Bar", "Stadium", "Clothing Store"],
     },
     {
         "id": "sparse",

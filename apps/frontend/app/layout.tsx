@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Discovery Mode — Context-Aware Discovery",
-  description: "A transparent interaction prototype over synthetic data.",
+  title: "From Data to Product — Context-Aware Discovery",
+  description: "An evidence-led location entropy case study and transparent discovery-ranking prototype.",
 };
 
 const directionContract = `
 <!--
-THESIS: Make cause and effect read like an annotated evidence review; refuse the generic dashboard grid.
-OWN-WORLD: Cool paper, ink navy, ultramarine controls, citron measurement marks, ruled result strips.
-STORY: Set conditions, see the applied signal, inspect reranking, then understand limits and evaluation.
-FIRST VIEWPORT: Compact title above a two-column workbench; conditions and signals left, ranked evidence right.
-FORM: Explain-first evidence dossier, grounded direction 6; seed 8b3c53b3.
+THESIS: Make the complete evidence-to-product chain read as one inspectable case file; refuse a prototype-first dashboard or detached analysis article.
+OWN-WORLD: Cool paper, white evidence plates, ink navy, ultramarine action, citron measured-state labels, and ruled comparative rows.
+STORY: Understand the question, inspect generated notebook evidence, compare opportunities, then operate and challenge the ranking hypothesis.
+FIRST VIEWPORT: Shared case-study masthead, persistent claim rail, decisive analysis thesis, and a five-stage evidence path leading directly to Discovery Mode.
+FORM: Annotated case-file rail, grounded structure 3; seed 526f6362.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 `;

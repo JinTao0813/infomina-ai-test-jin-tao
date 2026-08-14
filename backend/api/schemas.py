@@ -1,8 +1,8 @@
-"""Public schemas for the synthetic Discovery Mode API."""
+"""Public schemas for the privacy-safe Discovery Mode API."""
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Context(StrEnum):
@@ -17,6 +17,8 @@ class DiscoveryMode(StrEnum):
 
 
 class Profile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     id: str
     label: str
     venue_entropy: float = Field(ge=0, le=1)
@@ -28,14 +30,20 @@ class Profile(BaseModel):
 
 
 class CandidateVenue(BaseModel):
+    """Aggregate candidate fields safe to expose to the browser."""
+
+    model_config = ConfigDict(extra="forbid")
+
     id: str
-    name: str
+    label: str
+    city: str
     category: str
-    description: str
+    historical_checkins: int = Field(ge=0)
+    distinct_historical_visitors: int = Field(ge=0)
+    aggregate_popularity_percentile: int = Field(ge=0, le=100)
     baseline_relevance: float = Field(ge=0, le=1)
-    venue_novelty: float = Field(ge=0, le=1)
-    category_novelty: float = Field(ge=0, le=1)
-    distance_penalty: float = Field(ge=0, le=1)
+    aggregate_novelty: float = Field(ge=0, le=1)
+    provenance: str
 
 
 class RecommendationRequest(BaseModel):
@@ -45,17 +53,11 @@ class RecommendationRequest(BaseModel):
     limit: int = Field(default=6, ge=1, le=12)
 
 
-class Recommendation(BaseModel):
-    id: str
-    name: str
-    category: str
-    description: str
+class Recommendation(CandidateVenue):
     final_score: float
-    baseline_relevance: float
-    venue_novelty: float
-    category_novelty: float
-    novelty_score: float
-    distance_penalty: float
+    category_familiarity: int = Field(ge=0, le=1)
+    category_discovery: int = Field(ge=0, le=1)
+    novelty_score: float = Field(ge=0, le=1)
     reason: str
 
 

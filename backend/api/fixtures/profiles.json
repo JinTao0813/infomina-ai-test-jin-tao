@@ -8,9 +8,9 @@
     "observation_count": 180,
     "confidence": 0.9,
     "familiar_categories": [
+      "Train Station",
       "Coffee Shop",
-      "Park",
-      "Bakery"
+      "Building"
     ]
   },
   {
@@ -23,9 +23,9 @@
     "confidence": 0.84,
     "familiar_categories": [
       "Coffee Shop",
-      "Noodle House",
-      "Bookshop",
-      "Park"
+      "Train Station",
+      "Burger Joint",
+      "Building"
     ]
   },
   {
@@ -37,10 +37,10 @@
     "observation_count": 240,
     "confidence": 0.94,
     "familiar_categories": [
-      "Gallery",
-      "Restaurant",
-      "Music Venue",
-      "Park"
+      "Concert Hall",
+      "Bar",
+      "Stadium",
+      "Clothing Store"
     ]
   },
   {

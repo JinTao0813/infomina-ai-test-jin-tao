@@ -7,15 +7,22 @@
   },
   "scripts": {
     "dev": "next dev",
+    "check:analysis": "cd ../.. && uv run python scripts/export_notebook_presentation.py --source notebooks/location_entropy_analysis.ipynb --artifact apps/frontend/generated/analysis.json --assets apps/frontend/public/generated/analysis --check",
+    "prebuild": "npm run check:analysis",
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "next typegen && vitest run"
   },
   "dependencies": {
+    "katex": "^0.18.4",
     "next": "^16.3.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.8.0",

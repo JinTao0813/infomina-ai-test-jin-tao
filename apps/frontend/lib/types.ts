@@ -14,15 +14,19 @@ export interface Profile {
 
 export interface Recommendation {
   id: string;
-  name: string;
+  label: string;
+  city: string;
   category: string;
-  description: string;
-  final_score: number;
+  historical_checkins: number;
+  distinct_historical_visitors: number;
+  aggregate_popularity_percentile: number;
   baseline_relevance: number;
-  venue_novelty: number;
-  category_novelty: number;
+  aggregate_novelty: number;
+  provenance: string;
+  final_score: number;
+  category_familiarity: number;
+  category_discovery: number;
   novelty_score: number;
-  distance_penalty: number;
   reason: string;
 }
 

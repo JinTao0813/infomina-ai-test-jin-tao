@@ -1,0 +1,439 @@
+{
+  "schema_version": 1,
+  "title": "Location entropy in NYC and Tokyo Foursquare check-ins",
+  "summary": "Median normalized venue entropy is similar in NYC (**0.853**) and Tokyo (**0.860**). Among users with at least 20 check-ins in each context, median weekend-minus-weekday entropy is **0.058** and **0.059**, respectively. Median normalized category entropy is **0.810** and **0.707**, showing that place and activity diversity are related but not identical.",
+  "source_notebook": "notebooks/location_entropy_analysis.ipynb",
+  "source_sha256": "4e91acfbfdf0e8c9df9597f236b3b8da35704d85cdf0187fd3666aaaf89a7013",
+  "generated_at": "2026-08-13T08:28:00.773349Z",
+  "sections": [
+    {
+      "id": "objective-and-executive-summary",
+      "title": "1. Objective and executive summary",
+      "kind": "overview",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "This analysis asks whether people repeatedly check in at a small set of venues or spread their visits more widely, and whether that pattern differs between the NYC and Tokyo samples or between weekdays and weekends. Only aggregate results are shown.\n\n**Short answer.** Median normalized venue entropy is similar in NYC (**0.853**) and Tokyo (**0.860**). Among users with at least 20 check-ins in each context, median weekend-minus-weekday entropy is **0.058** and **0.059**, respectively. Median normalized category entropy is **0.810** and **0.707**, showing that place and activity diversity are related but not identical.\n\nThe analysis identifies three potentially actionable patterns: differences between users are more substantial than the small difference between city medians; most sufficiently observed users show higher weekend venue entropy; and venue diversity does not always imply activity-category diversity. These findings motivate **Context-Aware Discovery**, demonstrated through a companion full-stack prototype. The prototype is a testable product hypothesis, not a validated recommender."
+        }
+      ]
+    },
+    {
+      "id": "dataset-and-quality-checks",
+      "title": "2. Dataset and quality checks",
+      "kind": "method",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "Paths are relative to the project, `uv.lock` fixes the environment, and the original data files remain unchanged and ignored by Git. The setup below verifies that both expected source files are present."
+        },
+        {
+          "type": "code",
+          "execution_count": 10,
+          "source": "from dataclasses import asdict\nfrom pathlib import Path\n\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\nimport seaborn as sns\n\nfrom location_entropy import calculate_location_entropy, prepare_city_data\n\nsns.set_theme(style=\"whitegrid\", context=\"notebook\")\n\nPROJECT_ROOT = Path.cwd()\nif not (PROJECT_ROOT / \"pyproject.toml\").exists():\n    PROJECT_ROOT = PROJECT_ROOT.parent\nDATA_DIR = PROJECT_ROOT / \"dataset_tsmc2014\"\nFILES = {\n    \"NYC\": DATA_DIR / \"dataset_TSMC2014_NYC.txt\",\n    \"TKY\": DATA_DIR / \"dataset_TSMC2014_TKY.txt\",\n}\nassert all(path.is_file() for path in FILES.values()), \"Download both expected files; see README.md\"\nCITY_ORDER = list(FILES)",
+          "outputs": []
+        },
+        {
+          "type": "markdown",
+          "markdown": "### Loading and preparation\n\nThe assignment permits any public spatio-temporal dataset, so I used Foursquare TSMC 2014 check-ins for NYC and Tokyo after the recommended EPFL dataset was unavailable. Each event supplies the user, venue, and timestamp needed for per-user entropy.\n\nThe loader applies the headerless Latin-1 TSV schema explicitly, parses timestamps as UTC, and rejects malformed rows, blank required fields, invalid coordinates, and invalid timestamps. Exact duplicates are removed because they would over-count repeated events. Since bare user IDs overlap across files, every user is keyed by `(city, user_id)`.\n\nLocal weekday/weekend context comes from `America/New_York` or `Asia/Tokyo`, not the inconsistent supplied offsets. I retain `Home (private)` events because they represent observed routine, but report them only in aggregate; their uneven prevalence between cities remains a measurement and privacy limitation. Venue entropy uses venue IDs, while category entropy uses each event's recorded category ID rather than attempting unnecessary metadata canonicalization."
+        },
+        {
+          "type": "code",
+          "execution_count": 11,
+          "source": "frames = []\nquality_reports = []\nfor city, path in FILES.items():\n    frame, report = prepare_city_data(path, city)\n    # Derive context before concatenating columns with different city time zones.\n    frame[\"context\"] = np.where(frame[\"local_time\"].dt.dayofweek >= 5, \"weekend\", \"weekday\")\n    frames.append(frame)\n    quality_reports.append(asdict(report))\n\nquality = pd.json_normalize(quality_reports).set_index(\"city\")\nexpected = {\n    \"NYC\": {\"raw_rows\": 227_428, \"exact_duplicates\": 250, \"users\": 1_083,\n            \"venues\": 38_333, \"categories\": 251},\n    \"TKY\": {\"raw_rows\": 573_703, \"exact_duplicates\": 577, \"users\": 2_293,\n            \"venues\": 61_858, \"categories\": 247},\n}\nfor city, checks in expected.items():\n    for field, value in checks.items():\n        assert quality.loc[city, field] == value, f\"Unexpected {city} {field}\"\nassert (quality[[\"malformed_rows\", \"blank_fields\", \"invalid_coordinate_rows\"]] == 0).all().all()\nquality[[\n    \"raw_rows\", \"clean_rows\", \"exact_duplicates\", \"users\", \"venues\", \"categories\",\n    \"category_ids\", \"malformed_rows\", \"blank_fields\", \"invalid_coordinate_rows\", \"home_private_checkins\",\n    \"inconsistent_timezone_rows\", \"venue_category_conflicts\", \"venue_coordinate_conflicts\",\n    \"raw_activity.minimum\", \"raw_activity.median\", \"raw_activity.maximum\",\n    \"clean_activity.minimum\", \"clean_activity.median\", \"clean_activity.maximum\",\n]]",
+          "outputs": [
+            {
+              "type": "table",
+              "headers": [
+                "",
+                "raw_rows",
+                "clean_rows",
+                "exact_duplicates",
+                "users",
+                "venues",
+                "categories",
+                "category_ids",
+                "malformed_rows",
+                "blank_fields",
+                "invalid_coordinate_rows",
+                "home_private_checkins",
+                "inconsistent_timezone_rows",
+                "venue_category_conflicts",
+                "venue_coordinate_conflicts",
+                "raw_activity.minimum",
+                "raw_activity.median",
+                "raw_activity.maximum",
+                "clean_activity.minimum",
+                "clean_activity.median",
+                "clean_activity.maximum"
+              ],
+              "rows": [
+                [
+                  "city",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "NYC",
+                  "227428",
+                  "227178",
+                  "250",
+                  "1083",
+                  "38333",
+                  "251",
+                  "400",
+                  "0",
+                  "0",
+                  "0",
+                  "15382",
+                  "456",
+                  "337",
+                  "3484",
+                  "100",
+                  "153.0",
+                  "2697",
+                  "100",
+                  "153.0",
+                  "2693"
+                ],
+                [
+                  "TKY",
+                  "573703",
+                  "573126",
+                  "577",
+                  "2293",
+                  "61858",
+                  "247",
+                  "385",
+                  "0",
+                  "0",
+                  "0",
+                  "3106",
+                  "27",
+                  "557",
+                  "3468",
+                  "100",
+                  "173.0",
+                  "2991",
+                  "99",
+                  "173.0",
+                  "2987"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "markdown",
+          "markdown": "Both files load with the expected row counts. I found and removed exactly **250 NYC** and **577 Tokyo** duplicate rows. No malformed rows, blank fields, or invalid coordinates made it through validation.\n\nThe checks also exposed a few less obvious problems. Category IDs and display labels are not one-to-one, some venues have conflicting category or coordinate metadata, and the supplied offsets disagree with the city on **456 NYC** and **27 Tokyo** rows. Those findings support the choices above: use each event's category ID and derive local time from the city rather than trying to repair the venue metadata or trust the supplied offset.\n\nI show activity before and after deduplication separately. In the raw data every user has at least 100 events; after removing duplicates, one Tokyo user has 99. Every entropy result below uses the cleaned data. The next check makes sure the same numerical user ID in two cities is not treated as one person."
+        },
+        {
+          "type": "code",
+          "execution_count": 12,
+          "source": "data = pd.concat(frames, ignore_index=True)\ncity_user_count = data[[\"city\", \"user_id\"]].drop_duplicates().shape[0]\nbare_user_count = data[\"user_id\"].nunique()\noverlapping_ids = len(set(frames[0][\"user_id\"]) & set(frames[1][\"user_id\"]))\nassert city_user_count == quality[\"users\"].sum()\nassert data[\"utc_time\"].dt.tz is not None\npd.Series({\n    \"distinct (city, user_id) keys\": city_user_count,\n    \"distinct bare user_id values\": bare_user_count,\n    \"IDs appearing in both city files\": overlapping_ids,\n    \"UTC timezone\": str(data[\"utc_time\"].dt.tz),\n    \"NYC local timezone\": str(frames[0][\"local_time\"].dt.tz),\n    \"Tokyo local timezone\": str(frames[1][\"local_time\"].dt.tz),\n})",
+          "outputs": [
+            {
+              "type": "text",
+              "text": "distinct (city, user_id) keys                   3376\ndistinct bare user_id values                    2293\nIDs appearing in both city files                1083\nUTC timezone                                     UTC\nNYC local timezone                  America/New_York\nTokyo local timezone                      Asia/Tokyo\ndtype: object"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "methodology",
+      "title": "3. Methodology",
+      "kind": "method",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "For user $u$, let $n_{u,i}$ be their check-ins at venue $i$ and $N_u$ their total check-ins:\n\n$$p_{u,i}=n_{u,i}/N_u,\\qquad H_u=-\\sum_i p_{u,i}\\log_2 p_{u,i}.$$\n\nFour check-ins split A, A, A, B give probabilities 0.75 and 0.25 and entropy of about 0.811 bits. Repeating one venue gives zero entropy; distributing visits evenly raises it.\n\nUsers have different observed venue counts, so I also report $H_{u,norm}=H_u/\\log_2(K_u)$ for $K_u$ unique venues, defined as zero when $K_u\\leq1$. This measures how evenly recorded visits are spread across a user's observed set. It does not measure distance, dwell time, purchases, demand, or personality, and normalization does not remove observation bias.\n\n`calculate_location_entropy` performs the grouped calculation with vectorized pandas operations. Its small interface accepts the data, one or more group columns, and a location column; it validates required keys and returns observation count, unique-location count, raw entropy, and normalized entropy. Unit tests cover hand-calculated cases, composite groups, and malformed inputs."
+        },
+        {
+          "type": "code",
+          "execution_count": 13,
+          "source": "venue_entropy = calculate_location_entropy(\n    data, group_cols=[\"city\", \"user_id\"], location_col=\"venue_id\"\n)\ncategory_entropy = calculate_location_entropy(\n    data, group_cols=[\"city\", \"user_id\"], location_col=\"category_id\"\n)\nmetrics = venue_entropy.merge(\n    category_entropy, on=[\"city\", \"user_id\"], suffixes=(\"_venue\", \"_category\"), validate=\"one_to_one\"\n)\nassert len(metrics) == city_user_count\nassert metrics[\"normalized_entropy_venue\"].between(-1e-12, 1 + 1e-12).all()\nassert metrics[\"normalized_entropy_category\"].between(-1e-12, 1 + 1e-12).all()\n\nvenue_summary = metrics.groupby(\"city\").agg(\n    users=(\"user_id\", \"size\"),\n    median_checkins=(\"observation_count_venue\", \"median\"),\n    median_unique_venues=(\"unique_location_count_venue\", \"median\"),\n    q25_raw_entropy=(\"entropy_venue\", lambda x: x.quantile(.25)),\n    median_raw_entropy=(\"entropy_venue\", \"median\"),\n    q75_raw_entropy=(\"entropy_venue\", lambda x: x.quantile(.75)),\n    q25_normalized_entropy=(\"normalized_entropy_venue\", lambda x: x.quantile(.25)),\n    median_normalized_entropy=(\"normalized_entropy_venue\", \"median\"),\n    q75_normalized_entropy=(\"normalized_entropy_venue\", lambda x: x.quantile(.75)),\n).round(3)\nvenue_summary",
+          "outputs": [
+            {
+              "type": "table",
+              "headers": [
+                "",
+                "users",
+                "median_checkins",
+                "median_unique_venues",
+                "q25_raw_entropy",
+                "median_raw_entropy",
+                "q75_raw_entropy",
+                "q25_normalized_entropy",
+                "median_normalized_entropy",
+                "q75_normalized_entropy"
+              ],
+              "rows": [
+                [
+                  "city",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "NYC",
+                  "1083",
+                  "153.0",
+                  "76.0",
+                  "4.668",
+                  "5.348",
+                  "6.031",
+                  "0.781",
+                  "0.853",
+                  "0.915"
+                ],
+                [
+                  "TKY",
+                  "2293",
+                  "173.0",
+                  "80.0",
+                  "4.720",
+                  "5.487",
+                  "6.076",
+                  "0.780",
+                  "0.860",
+                  "0.920"
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core-city-comparison",
+      "title": "4. Core city comparison",
+      "kind": "observation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "The first thing I notice is how similar the normalized distributions are. The median is **0.853 in NYC** (IQR **0.781–0.915**) and **0.860 in Tokyo** (IQR **0.780–0.920**). Tokyo has slightly higher raw entropy and more unique venues, but most of the two distributions overlap.\n\nThis suggests that a typical user's recorded visits are spread across much of their own venue set rather than being dominated by one place. The 0.007 difference between city medians is not enough to rank the cities. The samples can differ in activity, Foursquare adoption, venue taxonomy, and who chose to check in. I therefore focus on medians, IQRs, and the full distributions rather than a mean or a city winner.\n\n**Figure 1 — normalized venue entropy distributions.**"
+        },
+        {
+          "type": "code",
+          "execution_count": 14,
+          "source": "fig, ax = plt.subplots(figsize=(8, 4.5))\nsns.violinplot(data=metrics, x=\"city\", y=\"normalized_entropy_venue\", inner=\"quart\", cut=0, ax=ax)\nax.set(title=\"Observed venue diversity is broadly similar across city samples\",\n       xlabel=\"City sample\", ylabel=\"Normalized venue entropy (0–1)\", ylim=(0, 1.02))\nplt.tight_layout()\nplt.show()",
+          "outputs": [
+            {
+              "type": "image",
+              "asset": "cell-010-output-00-708df090e95b.png",
+              "sha256": "708df090e95bf07e82df7d1449d9d0dc2ce1bd34447f2b98bb969dc627840e5f",
+              "alt": "Overlapping violin plots show similar normalized venue entropy distributions in NYC and Tokyo, with Tokyo only slightly higher at the median.",
+              "caption": "Figure 1. The two city distributions overlap substantially; the small median difference is descriptive, not a city ranking."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "activity-and-observation-bias",
+      "title": "5. Activity and observation bias",
+      "kind": "observation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "Normalized entropy is moderately lower among users with more check-ins and higher among users with more unique venues. The count distributions are skewed, so Figure 2 uses log-scaled axes and hexagonal bins to show density without displaying identifiable users. The relationship confirms that activity and venue counts should accompany entropy rather than treating it as a complete user summary.\n\n**Figure 2 — normalized entropy against check-in and unique-venue counts.**"
+        },
+        {
+          "type": "code",
+          "execution_count": 15,
+          "source": "fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharey=True)\nfor row, city in enumerate(CITY_ORDER):\n    subset = metrics[metrics[\"city\"] == city]\n    axes[row, 0].hexbin(subset[\"observation_count_venue\"], subset[\"normalized_entropy_venue\"],\n                        gridsize=32, mincnt=1, bins=\"log\", cmap=\"viridis\")\n    axes[row, 1].hexbin(subset[\"unique_location_count_venue\"], subset[\"normalized_entropy_venue\"],\n                        gridsize=32, mincnt=1, bins=\"log\", cmap=\"viridis\")\n    axes[row, 0].set_ylabel(f\"{city}\\nNormalized entropy\")\n    axes[row, 0].set_xscale(\"log\")\n    axes[row, 1].set_xscale(\"log\")\naxes[0, 0].set_title(\"Check-in count\")\naxes[0, 1].set_title(\"Unique venue count\")\nfor ax in axes[-1]: ax.set_xlabel(\"Count (log scale)\")\nfig.suptitle(\"Entropy remains related to the amount and variety observed\", y=1.01)\nplt.tight_layout()\nplt.show()",
+          "outputs": [
+            {
+              "type": "image",
+              "asset": "cell-012-output-00-3ba1241b6cb8.png",
+              "sha256": "3ba1241b6cb8c12eda1081f4d0a7455d469d7b61fffa55dc7c4543847578508b",
+              "alt": "Four density plots show normalized venue entropy declining with more observed check-ins and increasing with more unique venues in both cities.",
+              "caption": "Figure 2. Observation volume and unique-venue count remain associated with normalized entropy, so the metric is not bias-free."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weekdays-and-weekends",
+      "title": "6. Weekdays and weekends",
+      "kind": "observation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "I calculate venue entropy separately in local weekday and weekend time. To avoid comparing very small context samples, I retain only users with at least **20 cleaned check-ins in each context** and report exclusions. The threshold is pragmatic rather than a guarantee of reliability.\n\nFor each eligible user, $\\Delta H_{norm}=H_{weekend}-H_{weekday}$; a positive value means their recorded weekend visits are more diverse. Because this is a paired question, I summarize each city's user-level differences with the median and IQR."
+        },
+        {
+          "type": "code",
+          "execution_count": 16,
+          "source": "context_entropy = calculate_location_entropy(\n    data, [\"city\", \"user_id\", \"context\"], \"venue_id\"\n)\ncontext_wide = context_entropy.pivot(\n    index=[\"city\", \"user_id\"], columns=\"context\",\n    values=[\"observation_count\", \"normalized_entropy\"],\n).fillna(0)\neligible_mask = (\n    (context_wide[(\"observation_count\", \"weekday\")] >= 20)\n    & (context_wide[(\"observation_count\", \"weekend\")] >= 20)\n)\ntemporal = context_wide[eligible_mask].copy()\ntemporal[\"delta\"] = (\n    temporal[(\"normalized_entropy\", \"weekend\")]\n    - temporal[(\"normalized_entropy\", \"weekday\")]\n)\n\nrows = []\nfor city in CITY_ORDER:\n    delta = temporal.loc[city, \"delta\"]\n    total = int((context_wide.reset_index()[\"city\"] == city).sum())\n    rows.append({\n        \"city\": city,\n        \"eligible_users\": len(delta),\n        \"excluded_users\": total - len(delta),\n        \"q25_delta\": delta.quantile(.25),\n        \"median_delta\": delta.median(),\n        \"q75_delta\": delta.quantile(.75),\n        \"share_positive\": (delta > 0).mean(),\n    })\ntemporal_summary = pd.DataFrame(rows).set_index(\"city\")\ntemporal_summary.round(3)",
+          "outputs": [
+            {
+              "type": "table",
+              "headers": [
+                "",
+                "eligible_users",
+                "excluded_users",
+                "q25_delta",
+                "median_delta",
+                "q75_delta",
+                "share_positive"
+              ],
+              "rows": [
+                [
+                  "city",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "NYC",
+                  "1019",
+                  "64",
+                  "0.020",
+                  "0.058",
+                  "0.116",
+                  "0.885"
+                ],
+                [
+                  "TKY",
+                  "2142",
+                  "151",
+                  "0.016",
+                  "0.059",
+                  "0.131",
+                  "0.854"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "markdown",
+          "markdown": "The threshold leaves **1,019 NYC** users and **2,142 Tokyo** users; it excludes 64 and 151, respectively. Median weekend-minus-weekday entropy is **+0.058 in NYC** (IQR **0.020–0.116**) and **+0.059 in Tokyo** (IQR **0.016–0.131**). The difference is positive for **88.5%** of eligible NYC users and **85.4%** of eligible Tokyo users.\n\nMost eligible users therefore have a broader or more even set of recorded weekend visits. This is descriptive: different activities or check-in choices could produce the pattern, so it does not establish that weekends cause exploration.\n\n**Figure 3 — weekend entropy minus weekday entropy for the same user.**"
+        },
+        {
+          "type": "code",
+          "execution_count": 17,
+          "source": "delta_plot = temporal[\"delta\"].rename(\"delta\").reset_index()\nfig, ax = plt.subplots(figsize=(9, 4.5))\nsns.histplot(data=delta_plot, x=\"delta\", hue=\"city\", bins=50, stat=\"density\",\n             common_norm=False, element=\"step\", fill=False, ax=ax)\nax.axvline(0, color=\"black\", linewidth=1, linestyle=\"--\")\nax.set(title=\"Most eligible users have higher normalized entropy on weekends\",\n       xlabel=\"Weekend − weekday normalized venue entropy\", ylabel=\"Density\")\nplt.tight_layout()\nplt.show()",
+          "outputs": [
+            {
+              "type": "image",
+              "asset": "cell-016-output-00-61295f15c623.png",
+              "sha256": "61295f15c6231c7d02e9c3796df38b97d93c63c146af2c1a296b217d0429acf9",
+              "alt": "Two overlapping histograms place most weekend-minus-weekday entropy differences above zero for eligible users in both cities.",
+              "caption": "Figure 3. Most users meeting the 20-check-in-per-context threshold have higher observed weekend entropy; this does not establish causation."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "venue-diversity-and-activity-diversity",
+      "title": "7. Venue diversity and activity diversity",
+      "kind": "observation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "A person can visit many coffee shops or train stations without visiting many kinds of places. I therefore repeat the calculation using each check-in's `category_id`, separating venue variety from activity variety.\n\nMedian normalized category entropy is **0.810 in NYC** and **0.707 in Tokyo**. Its rank correlation with venue entropy is **0.897 in NYC** and **0.728 in Tokyo**. The measures are related but not interchangeable: especially in Tokyo, a varied venue set can still represent a narrower activity set.\n\nThis is an analytical distinction, not a preference claim. It supports keeping profile-level venue and activity diversity distinct. In the prototype, aggregate candidate novelty and profile-specific category familiarity are separate ranking inputs; neither is a venue entropy score, and this analysis does not show that a person wants either kind of novelty.\n\n**Figure 4 — normalized venue entropy versus normalized category entropy.**"
+        },
+        {
+          "type": "code",
+          "execution_count": 18,
+          "source": "category_summary = metrics.groupby(\"city\").agg(\n    median_category_entropy=(\"normalized_entropy_category\", \"median\"),\n)\ncategory_summary[\"rank_correlation\"] = metrics.groupby(\"city\").apply(\n    lambda group: group[\"normalized_entropy_venue\"].rank().corr(\n        group[\"normalized_entropy_category\"].rank()\n    ),\n    include_groups=False,\n)\n\nfig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)\nfor ax, city in zip(axes, CITY_ORDER):\n    subset = metrics[metrics[\"city\"] == city]\n    summary = category_summary.loc[city]\n    ax.hexbin(\n        subset[\"normalized_entropy_venue\"],\n        subset[\"normalized_entropy_category\"],\n        gridsize=30,\n        mincnt=1,\n        bins=\"log\",\n        cmap=\"magma\",\n    )\n    ax.plot([0, 1], [0, 1], linestyle=\"--\", color=\"gray\", linewidth=1)\n    ax.set(\n        title=(\n            f\"{city}: median category entropy {summary['median_category_entropy']:.3f}\"\n            f\"\\nRank correlation {summary['rank_correlation']:.3f}\"\n        ),\n        xlabel=\"Normalized venue entropy\",\n        ylabel=\"Normalized category entropy\",\n    )\nfig.suptitle(\"Venue diversity and semantic diversity are related, not identical\", y=1.05)\nplt.tight_layout()\nplt.show()",
+          "outputs": [
+            {
+              "type": "image",
+              "asset": "cell-018-output-00-d0404d202c07.png",
+              "sha256": "d0404d202c07551683169c3264c06edc2a73a48273acbde2adc42c4d363f1500",
+              "alt": "Two city scatterplots show positive but imperfect relationships between normalized venue entropy and normalized category entropy.",
+              "caption": "Figure 4. Venue and activity-category diversity are related but not interchangeable, particularly in the Tokyo sample."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "insights-and-product-opportunities",
+      "title": "8. Insights and product opportunities",
+      "kind": "hypothesis",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "The table separates computed evidence or cautious interpretation from possible needs and implementation opportunities. The middle and right columns are hypotheses, not results.\n\n| Evidence or interpretation | Potential user or business need | Product opportunity |\n|---|---|---|\n| User variation exceeds the city-median difference | Personalization without geographic stereotyping | Context-Aware Discovery |\n| Weekend entropy is higher for most eligible users | Recommendations that reflect changing context | Weekend discovery adjustment |\n| Venue and category diversity differ | Choose between a new place and a new kind of activity | Separate profile-diversity and candidate signals |\n| Metrics vary with observed-history volume | Avoid premature personalization | Confidence-aware cold start |\n| Interpretation: concentrated histories may be sensitive | Transparency and control over inferred behavior | Privacy/predictability summary |\n\nFour concepts follow with different strength. **Context-Aware Discovery** is the selected primary concept because it connects all principal findings while making uncertainty and explicit control part of the behavior. **Weekend Discovery Mode** is a useful adjustment inside it, but context alone is too narrow for a standalone product. **Merchant Audience Insights** could aggregate broad patterns, but check-ins are not footfall, purchases, or demand. A **Privacy and Predictability Summary** could offer transparency, but entropy alone is not a privacy-risk score."
+        }
+      ]
+    },
+    {
+      "id": "selected-concept-and-product-hypothesis",
+      "title": "9. Selected concept and product hypothesis",
+      "kind": "overview",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "> People may receive more useful venue suggestions when a transparent candidate-novelty signal is adjusted cautiously using observed profile diversity, reliable temporal context, category familiarity, and an explicit user preference.\n\nThis is the hypothesis, not an observed preference. A deterministic prototype demonstrates one possible implementation:\n\n- **Profile history:** normalized venue and category entropy describe diversity in observed check-ins; they are not venue scores.\n- **Candidate novelty:** inverse aggregate historical popularity indicates “less commonly visited in this sample,” not newly opened or higher quality.\n- **Category familiarity:** categories present in the synthetic profile history remain a distinct, inspectable adjustment.\n- **Reliable positive weekend difference:** modestly raise applied discovery on weekends.\n- **Sparse history:** regress the inferred signal toward neutral and rely more on explicit preference.\n- **Every profile:** explicit preference dominates the inferred default.\n\nEntropy stays attached to the synthetic profile. It is not a personality label or a claim about intent, home, work, venue quality, freshness, or current desirability.\n\n> **Required claim boundary.** These patterns motivate product hypotheses. They do not show that high-entropy users prefer novel recommendations, that weekends cause exploration, or that entropy-aware ranking improves engagement."
+        }
+      ]
+    },
+    {
+      "id": "prototype-walkthrough-and-architecture",
+      "title": "10. Prototype walkthrough and architecture",
+      "kind": "implementation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "The companion **Discovery Mode** begins with a three-step evidence bridge:\n\n1. normalized venue and category entropy describe diversity in a synthetic profile’s observed history;\n2. that profile-level signal, confidence, and a modest reliable weekend difference adjust an explicit discovery choice;\n3. the resulting deterministic ranking demonstrates a product hypothesis—it does not prove recommendation quality.\n\nA reviewer selects an anonymous synthetic profile, weekday/weekend context, and “What feels right today?” choice. Controls rerank immediately. Every result has a pseudonymous label because the source data contain no venue names. Each candidate shows city, source category, rounded aggregate historical support, a plain-language reason, and expandable score components.\n\n![Discovery Mode selected interface](/generated/analysis/reference-646aad75e877.png)\n\n![Prototype architecture](/generated/analysis/reference-35595aa8b5c5.svg)\n\n```text\nBrowser\n  ↓\nNext.js + React + committed notebook presentation artifact\n  ↓ JSON/HTTP for Discovery Mode only\nFastAPI + Pydantic\n  ↓\nDeterministic ranking policy + safe aggregate candidate catalog\n  ↓ offline generation only\nHistorical NYC and Tokyo check-ins\n```\n\nExample request:\n\n```json\n{\"profile_id\":\"routine\",\"context\":\"weekend\",\"discovery_mode\":\"balanced\",\"limit\":6}\n```\n\nExample response excerpt:\n\n```json\n{\n  \"profile\":{\"id\":\"routine\",\"venue_entropy\":0.72,\"category_entropy\":0.58,\"confidence\":0.90},\n  \"context\":\"weekend\",\n  \"applied_discovery\":0.5803,\n  \"recommendations\":[{\n    \"id\":\"candidate-nyc-004\",\n    \"label\":\"NYC · Concert Hall · Candidate 04\",\n    \"category\":\"Concert Hall\",\n    \"aggregate_popularity_percentile\":57,\n    \"aggregate_novelty\":0.43,\n    \"category_familiarity\":0,\n    \"reason\":\"A category outside this synthetic profile’s familiar history, with a modest weekend adjustment.\"\n  }],\n  \"disclaimer\":\"Illustrative discovery ranking over privacy-safe historical candidates; not a trained or validated recommender or current place guide.\"\n}\n```\n\nThe ranking policy maps explicit choices to 0.20, 0.50, or 0.80. Explicit intent contributes 70% of applied discovery; confidence-adjusted profile venue/category entropy contributes 30%; weekend context adds `confidence × weekend_delta`. Baseline relevance is an illustrative transform of aggregate popularity. Candidate novelty is its inverse. Category familiarity is a separate binary profile adjustment. A bounded curve keeps familiar mode relevance-led while allowing the “something new” choice to change order visibly. Generated candidate ID breaks ties. The policy is illustrative and deterministic, not learned.\n\nThe offline catalog groups actual historical venue records, excludes private-home and other sensitive or residential categories, requires at least 30 check-ins and 15 distinct visitors, and selects eight candidates per city across the eligible popularity range. Counts are rounded to groups of five. It emits no source venue IDs, user IDs, exact coordinates, timestamps, or trajectories. Because the source has no venue names, labels are generated as city, category, and candidate number rather than invented proper names.\n\n“New” means new to the selected synthetic profile or less commonly visited in this historical sample. The source check-ins are from 2012–2013, so candidates are not current recommendations and may no longer exist. The API loads only the committed safe catalog; the frontend build never reads raw check-ins. Exact generation, validation, local run, and test commands are in [`README.md`](../README.md)."
+        }
+      ]
+    },
+    {
+      "id": "evaluation-and-safeguards",
+      "title": "11. Evaluation and safeguards",
+      "kind": "hypothesis",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "A future randomized experiment must answer:\n\n> **Does adapting recommendation novelty with these signals improve user outcomes relative to the baseline ranker?**\n\n- **Control:** baseline relevance ranking.\n- **Treatment:** context-aware ranking over the same candidate pool with the same explicit override.\n- **Primary metric:** save or selection rate per recommendation impression.\n- **Secondary metrics:** category discovery rate, catalog coverage, and return engagement.\n- **Guardrails:** hides/dismissals, early exits, repeated suggestions, travel distance, latency, and sparse-history performance.\n- **Segments:** baseline entropy, confidence, context, city, and explicit discovery choice.\n\nOffline entropy correlations do not answer this validation question. Before launch, the feature would also need data minimization, expiry, user controls, threshold calibration, monitoring for differential harm, and strict exclusion of home/work inference and private-home coordinates."
+        }
+      ]
+    },
+    {
+      "id": "limitations-production-path-and-conclusion",
+      "title": "12. Limitations, production path, and conclusion",
+      "kind": "limitation",
+      "blocks": [
+        {
+          "type": "markdown",
+          "markdown": "- Voluntary check-ins reflect both movement and the decision to report it; they do not measure dwell time, purchases, demand, or footfall.\n- Entropy remains dependent on observation count and observation process. Normalization improves comparability but cannot remove sampling bias.\n- These 2012–2013 users are not representative of NYC or Tokyo populations or necessarily of current behavior. City differences are descriptive, not causal or cultural effects.\n- Conflicting venue metadata and category taxonomies add uncertainty, and the 20-event context threshold should be revisited for a deployed use case.\n- Private-home records are sensitive and unevenly represented, so production use would require stricter data governance than this aggregate analysis.\n\n### Production path\n\nThe repository provides explicit schema and input validation, composite user keys, duplicate removal, separate loading and metric modules, deterministic analysis, and unit tests. At larger scale, validated events could be partitioned in Parquet and aggregated with Polars or Spark. A scheduled pipeline should monitor schema drift, missing values, duplicate spikes, timezone anomalies, metadata conflicts, and metric distributions. Metric definitions and thresholds should be versioned for traceability.\n\n### Conclusion: evidence, hypothesis, validation\n\n1. **What the historical data show:** city medians are similar; within-city variation is larger; most sufficiently observed users have higher weekend venue entropy; venue and category diversity differ; and all metrics remain tied to what was observed.\n2. **What hypothesis follows:** venue novelty and activity novelty might be more useful when adjusted cautiously by confidence, reliable context, and an explicit user preference rather than city stereotypes.\n3. **What evidence is still required:** a randomized comparison must establish whether this behavior improves saves or selections without worsening dismissals, repetition, distance, latency, sparse-history outcomes, privacy, or user trust.\n\nThe historical analysis motivates the question. It does not validate the prototype or establish present-day recommendation quality.\n\n### References\n\n- Yang, D., Zhang, D., Zheng, V. W., & Yu, Z. (2015). Modeling User Activity Preference by Leveraging User Spatial Temporal Characteristics in LBSNs. *IEEE Transactions on Systems, Man, and Cybernetics: Systems*, 45(1), 129–142.\n- Starmer, J. (StatQuest). [*Entropy (for data science) Clearly Explained*](https://www.youtube.com/watch?v=YtebGVx-Fxw). YouTube."
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-"""Transparent deterministic ranking policy for fictional candidates."""
+"""Transparent deterministic policy over privacy-safe historical candidates."""
 
 from collections.abc import Sequence
 
@@ -21,7 +21,7 @@ SPARSE_CONFIDENCE_THRESHOLD = 0.50
 def calculate_applied_discovery(
     profile: Profile, context: Context, discovery_mode: DiscoveryMode
 ) -> float:
-    """Apply the documented confidence and context adjustments."""
+    """Apply documented confidence and context adjustments."""
     inferred_discovery = 0.60 * profile.venue_entropy + 0.40 * profile.category_entropy
     confidence_adjusted = (
         profile.confidence * inferred_discovery
@@ -48,25 +48,18 @@ def rank_candidates(
     discovery_mode: DiscoveryMode,
     limit: int,
 ) -> list[Recommendation]:
-    """Rank candidates by score descending and stable ID ascending."""
+    """Rank candidates by exact score descending and stable generated ID ascending."""
     applied_discovery = calculate_applied_discovery(
         profile, context, discovery_mode
     )
     scored_candidates = [
-        (
-            _calculate_final_score(profile, candidate, applied_discovery),
-            candidate,
-        )
+        (_calculate_final_score(profile, candidate, applied_discovery), candidate)
         for candidate in candidates
     ]
     scored_candidates.sort(key=lambda item: (-item[0], item[1].id))
     return [
         _format_recommendation(
-            profile,
-            candidate,
-            context,
-            discovery_mode,
-            exact_score,
+            profile, candidate, context, discovery_mode, exact_score
         )
         for exact_score, candidate in scored_candidates[:limit]
     ]
@@ -77,43 +70,45 @@ def ranking_summary(
 ) -> str:
     if profile.confidence < SPARSE_CONFIDENCE_THRESHOLD:
         return (
-            "Limited history shifts the inferred signal toward a neutral starting "
-            "point; your explicit choice remains the strongest input."
+            "Limited history shifts the inferred profile signal toward neutral; "
+            "your explicit choice remains the strongest input."
         )
     if context is Context.WEEKEND and profile.weekend_delta > 0:
         return (
-            "Your choice leads, with a modest weekend adjustment supported by this "
-            "synthetic profile’s observed pattern."
+            "Your choice leads, with a modest weekend adjustment supported only "
+            "by this synthetic profile’s observed history."
         )
     if discovery_mode is DiscoveryMode.FAMILIAR:
-        return "Your familiar choice emphasizes baseline relevance over novelty."
+        return "Your familiar choice emphasizes aggregate historical popularity."
     if discovery_mode is DiscoveryMode.SOMETHING_NEW:
-        return "Your discovery choice gives venue and activity novelty more weight."
-    return "Your balanced choice combines relevance with measured venue and activity novelty."
+        return (
+            "Your discovery choice gives inverse historical popularity and "
+            "unfamiliar categories more weight."
+        )
+    return (
+        "Your balanced choice combines aggregate historical popularity with "
+        "candidate novelty and category familiarity."
+    )
 
 
-def _effective_category_novelty(
-    profile: Profile, candidate: CandidateVenue
-) -> float:
-    """Cap novelty for categories represented in this profile's history."""
-    if candidate.category in profile.familiar_categories:
-        return min(candidate.category_novelty, 1 - profile.category_entropy)
-    return candidate.category_novelty
+def _category_familiarity(profile: Profile, candidate: CandidateVenue) -> int:
+    return int(candidate.category in profile.familiar_categories)
 
 
-def _calculate_novelty_score(profile: Profile, candidate: CandidateVenue) -> float:
-    category_novelty = _effective_category_novelty(profile, candidate)
-    return 0.60 * candidate.venue_novelty + 0.40 * category_novelty
+def _novelty_score(profile: Profile, candidate: CandidateVenue) -> float:
+    category_discovery = 1 - _category_familiarity(profile, candidate)
+    return 0.65 * candidate.aggregate_novelty + 0.35 * category_discovery
 
 
 def _calculate_final_score(
     profile: Profile, candidate: CandidateVenue, applied_discovery: float
 ) -> float:
-    novelty_score = _calculate_novelty_score(profile, candidate)
+    # The curve keeps familiar mode relevance-led while allowing the explicit
+    # discovery choice to produce a clear ranking change.
+    novelty_weight = applied_discovery**1.5
     return (
-        (1 - applied_discovery) * candidate.baseline_relevance
-        + applied_discovery * novelty_score
-        - 0.15 * candidate.distance_penalty
+        (1 - novelty_weight) * candidate.baseline_relevance
+        + novelty_weight * _novelty_score(profile, candidate)
     )
 
 
@@ -124,14 +119,13 @@ def _format_recommendation(
     discovery_mode: DiscoveryMode,
     exact_score: float,
 ) -> Recommendation:
-    candidate_payload = candidate.model_dump()
-    candidate_payload["category_novelty"] = _effective_category_novelty(
-        profile, candidate
-    )
+    familiarity = _category_familiarity(profile, candidate)
     return Recommendation(
-        **candidate_payload,
+        **candidate.model_dump(),
         final_score=round(exact_score, 4),
-        novelty_score=round(_calculate_novelty_score(profile, candidate), 4),
+        category_familiarity=familiarity,
+        category_discovery=1 - familiarity,
+        novelty_score=round(_novelty_score(profile, candidate), 4),
         reason=_explain(profile, candidate, context, discovery_mode),
     )
 
@@ -143,16 +137,32 @@ def _explain(
     discovery_mode: DiscoveryMode,
 ) -> str:
     if profile.confidence < SPARSE_CONFIDENCE_THRESHOLD:
-        return "Using a neutral starting point because this demo profile has limited history."
+        return (
+            "Neutral profile fallback: limited history means your explicit choice "
+            "does most of the work."
+        )
+    familiar = bool(_category_familiarity(profile, candidate))
     if discovery_mode is DiscoveryMode.FAMILIAR and candidate.baseline_relevance >= 0.75:
-        return "Prioritized for relevance because you chose to keep it familiar."
-    if (
-        candidate.category in profile.familiar_categories
-        and candidate.venue_novelty >= 0.55
-    ):
-        return "A new venue in a familiar activity category."
-    if candidate.category_novelty >= 0.65 and context is Context.WEEKEND:
-        return "A broader activity choice for your weekend setting."
-    if candidate.category_novelty >= 0.65:
-        return "A different kind of activity, surfaced because discovery has more weight."
-    return "Balances baseline relevance with a measured amount of venue novelty."
+        return (
+            "Higher aggregate popularity in the historical sample supports your "
+            "familiar choice."
+        )
+    if familiar and candidate.aggregate_novelty >= 0.5:
+        return (
+            "Less commonly visited in this historical sample, within a category "
+            "familiar to the synthetic profile."
+        )
+    if not familiar and context is Context.WEEKEND:
+        return (
+            "A category outside this synthetic profile’s familiar history, with "
+            "a modest weekend adjustment."
+        )
+    if not familiar:
+        return (
+            "A category outside this synthetic profile’s familiar history, surfaced "
+            "as a separate discovery signal."
+        )
+    return (
+        "Balances aggregate historical popularity with candidate novelty; the "
+        "category is familiar to this synthetic profile."
+    )

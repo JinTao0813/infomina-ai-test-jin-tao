@@ -83,15 +83,17 @@ def test_ranking_is_deterministic_and_candidate_id_breaks_ties(
     candidates = [
         CandidateVenue(
             id=candidate_id,
-            name=candidate_id,
+            label=f"NYC · Park · {candidate_id}",
+            city="NYC",
             category="Park",
-            description="Fictional venue.",
+            historical_checkins=100,
+            distinct_historical_visitors=50,
+            aggregate_popularity_percentile=50,
             baseline_relevance=0.7,
-            venue_novelty=0.5,
-            category_novelty=0.5,
-            distance_penalty=0.2,
+            aggregate_novelty=0.5,
+            provenance="Aggregated historical Foursquare sample",
         )
-        for candidate_id in ["venue-b", "venue-a"]
+        for candidate_id in ["candidate-b", "candidate-a"]
     ]
 
     result = rank_candidates(
@@ -102,63 +104,38 @@ def test_ranking_is_deterministic_and_candidate_id_breaks_ties(
         limit=2,
     )
 
-    assert [item.id for item in result] == ["venue-a", "venue-b"]
+    assert [item.id for item in result] == ["candidate-a", "candidate-b"]
 
 
-def test_familiar_categories_change_category_novelty_and_ranking(
+def test_category_familiarity_is_separate_from_aggregate_candidate_novelty(
     routine_profile: Profile,
 ) -> None:
+    common = {
+        "city": "NYC",
+        "historical_checkins": 100,
+        "distinct_historical_visitors": 50,
+        "aggregate_popularity_percentile": 50,
+        "baseline_relevance": 0.5,
+        "aggregate_novelty": 0.5,
+        "provenance": "Aggregated historical Foursquare sample",
+    }
     candidates = [
-        CandidateVenue(
-            id="coffee",
-            name="Coffee",
-            category="Coffee Shop",
-            description="Fictional venue.",
-            baseline_relevance=0.5,
-            venue_novelty=0.5,
-            category_novelty=0.9,
-            distance_penalty=0,
-        ),
-        CandidateVenue(
-            id="workshop",
-            name="Workshop",
-            category="Workshop",
-            description="Fictional venue.",
-            baseline_relevance=0.5,
-            venue_novelty=0.5,
-            category_novelty=0.9,
-            distance_penalty=0,
-        ),
+        CandidateVenue(id="coffee", label="NYC · Coffee Shop · Candidate 01", category="Coffee Shop", **common),
+        CandidateVenue(id="workshop", label="NYC · Workshop · Candidate 02", category="Workshop", **common),
     ]
 
-    coffee_familiar = rank_candidates(
-        profile=routine_profile.model_copy(
-            update={"familiar_categories": ["Coffee Shop"]}
-        ),
-        candidates=candidates,
-        context=Context.WEEKDAY,
-        discovery_mode=DiscoveryMode.BALANCED,
-        limit=2,
-    )
-    workshop_familiar = rank_candidates(
-        profile=routine_profile.model_copy(
-            update={"familiar_categories": ["Workshop"]}
-        ),
+    ranked = rank_candidates(
+        profile=routine_profile.model_copy(update={"familiar_categories": ["Coffee Shop"]}),
         candidates=candidates,
         context=Context.WEEKDAY,
         discovery_mode=DiscoveryMode.BALANCED,
         limit=2,
     )
 
-    assert [item.id for item in coffee_familiar] == ["workshop", "coffee"]
-    assert [item.id for item in workshop_familiar] == ["coffee", "workshop"]
-    familiar_category_ceiling = 1 - routine_profile.category_entropy
-    assert coffee_familiar[1].category_novelty == pytest.approx(
-        familiar_category_ceiling
-    )
-    assert workshop_familiar[1].category_novelty == pytest.approx(
-        familiar_category_ceiling
-    )
+    assert [item.id for item in ranked] == ["workshop", "coffee"]
+    assert ranked[0].category_familiarity == 0
+    assert ranked[1].category_familiarity == 1
+    assert ranked[0].aggregate_novelty == ranked[1].aggregate_novelty == 0.5
 
 
 client = TestClient(app)
@@ -167,27 +144,18 @@ client = TestClient(app)
 def test_ordering_uses_unrounded_scores_before_tie_breaking(
     routine_profile: Profile,
 ) -> None:
+    common = {
+        "city": "NYC",
+        "category": "Park",
+        "historical_checkins": 100,
+        "distinct_historical_visitors": 50,
+        "aggregate_popularity_percentile": 50,
+        "aggregate_novelty": 0.5,
+        "provenance": "Aggregated historical Foursquare sample",
+    }
     candidates = [
-        CandidateVenue(
-            id="venue-b",
-            name="Higher exact score",
-            category="Park",
-            description="Fictional venue.",
-            baseline_relevance=0.5,
-            venue_novelty=0.5,
-            category_novelty=0.5,
-            distance_penalty=0,
-        ),
-        CandidateVenue(
-            id="venue-a",
-            name="Lower exact score",
-            category="Park",
-            description="Fictional venue.",
-            baseline_relevance=0.4999,
-            venue_novelty=0.5,
-            category_novelty=0.5,
-            distance_penalty=0,
-        ),
+        CandidateVenue(id="candidate-b", label="NYC · Park · Higher", baseline_relevance=0.5, **common),
+        CandidateVenue(id="candidate-a", label="NYC · Park · Lower", baseline_relevance=0.4999, **common),
     ]
 
     result = rank_candidates(
@@ -198,7 +166,7 @@ def test_ordering_uses_unrounded_scores_before_tie_breaking(
         limit=2,
     )
 
-    assert [item.id for item in result] == ["venue-b", "venue-a"]
+    assert [item.id for item in result] == ["candidate-b", "candidate-a"]
 
 
 def test_recommendations_validate_request_and_unknown_profile() -> None:
@@ -239,9 +207,14 @@ def test_recommendations_are_safe_and_explainable() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert len(payload["recommendations"]) == 6
-    assert payload["disclaimer"].startswith("Illustrative ranking")
+    assert "historical candidates" in payload["disclaimer"].lower()
     assert all(item["reason"] for item in payload["recommendations"])
-    forbidden = {"user_id", "venue_id", "latitude", "longitude", "coordinates"}
+    assert all(item["provenance"] == "Aggregated historical Foursquare sample" for item in payload["recommendations"])
+    assert all("aggregate_novelty" in item and "category_familiarity" in item for item in payload["recommendations"])
+    forbidden = {
+        "user_id", "venue_id", "latitude", "longitude", "coordinates",
+        "timestamp", "utc_time", "trajectory", "distance_penalty", "name",
+    }
     assert forbidden.isdisjoint(_all_keys(payload))
 
 
@@ -257,14 +230,30 @@ def test_explicit_modes_visibly_rerank_the_shared_candidate_pool() -> None:
             },
         )
         assert response.status_code == 200
-        return [item["name"] for item in response.json()["recommendations"]]
+        return [item["label"] for item in response.json()["recommendations"]]
 
     familiar = request("familiar")
     something_new = request("something_new")
 
-    assert familiar[0] == "Northline Coffee Works"
-    assert something_new[0] == "Cloudline Observatory"
+    assert familiar[0] == "NYC · Train Station · Candidate 01"
+    assert something_new[0] != familiar[0]
     assert familiar != something_new
+
+
+def test_balanced_mode_keeps_meaningful_score_variation() -> None:
+    response = client.post(
+        "/recommendations",
+        json={
+            "profile_id": "mixed",
+            "context": "weekday",
+            "discovery_mode": "balanced",
+            "limit": 6,
+        },
+    )
+
+    assert response.status_code == 200
+    scores = [item["final_score"] for item in response.json()["recommendations"]]
+    assert len(set(scores)) > 1
 
 
 def test_sparse_profile_returns_neutral_fallback_explanation() -> None:

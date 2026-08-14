@@ -1,6 +1,6 @@
 ---
-name: Context-Aware Discovery
-description: An evidence-led interface for inspecting deterministic recommendation behavior.
+name: From Data to Product
+description: A cool, evidence-led system for reading analysis and inspecting ranking behavior.
 colors:
   ink-navy: "#111c34"
   ink-soft: "#516079"
@@ -16,19 +16,25 @@ colors:
 typography:
   display:
     fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "clamp(2.6rem, 5.3vw, 5.4rem)"
+    fontSize: "clamp(3rem, 5.5vw, 5.8rem)"
     fontWeight: 700
-    lineHeight: 0.94
+    lineHeight: 0.93
     letterSpacing: "-0.04em"
+  headline:
+    fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "clamp(1.85rem, 3vw, 2.75rem)"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "-0.035em"
   body:
     fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.55
   label:
     fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "0.76rem"
-    fontWeight: 750
+    fontSize: "0.74rem"
+    fontWeight: 780
     lineHeight: 1.5
 rounded:
   compact: "4px"
@@ -38,13 +44,13 @@ spacing:
   compact: "8px"
   control: "12px"
   panel: "28px"
-  section: "56px"
+  section: "70px"
 components:
   action-control:
     backgroundColor: "{colors.action-blue}"
     textColor: "{colors.surface}"
     rounded: "{rounded.control}"
-    padding: "10px 12px"
+    padding: "10px 15px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-navy}"
@@ -57,40 +63,40 @@ components:
     padding: "9px 12px"
 ---
 
-# Design System: Context-Aware Discovery
+# Design System: From Data to Product
 
 ## Overview
 
 **Creative North Star: "The Evidence Workbench"**
 
-A cool, precise work surface makes ranking cause-and-effect inspectable. It feels closer to an annotated analysis artifact than a consumer recommendation feed: conditions on one side, ranked evidence on the other, with uncertainty and methodology in the same visual hierarchy as the results.
+A cool, precise work surface makes the full evidence chain inspectable. The system feels like an annotated analytical case file rather than a consumer recommendation feed: source and claim boundaries stay visible, generated findings occupy white evidence plates, and controls sit beside the outcomes they affect.
 
-The interface is restrained and dense without becoming clinical. Blue marks action and inference; citron marks measured outputs and synthetic-data status. Familiar controls disappear into the task while ruled lists make rank changes easy to compare.
+The visual language is restrained and dense without becoming clinical. Blue marks action and inference; citron marks measured or declared state. Ruled paths, tables, figures, and ranked strips carry comparison without turning every thought into a card.
 
 **Key Characteristics:**
 - Cool paper and white working surfaces
-- Ink-heavy typography with compact labels
-- One action blue and one measured-output citron
-- Ruled result strips instead of repeated cards
-- Explanations adjacent to outcomes
+- Ink-heavy typography with compact evidence labels
+- One action blue and one measured-state citron
+- Ruled reading paths and result strips instead of repeated cards
+- Interpretations, provenance, and limitations adjacent to outcomes
 
 ## Colors
 
-The palette separates action, measured output, and neutral evidence without using color as the sole state cue.
+The palette separates action, measured state, neutral evidence, and warning without relying on color alone.
 
 ### Primary
-- **Action Blue:** selected controls, focus-adjacent emphasis, links, and rank markers.
-- **Deep Action Blue:** text emphasis and hover states.
+- **Action Blue:** selected controls, links, rank markers, and implementation labels.
+- **Deep Action Blue:** readable emphasis and hover states.
 
 ### Secondary
-- **Measured Citron:** applied-discovery readouts and synthetic-data labels only.
+- **Measured Citron:** applied-discovery readouts, historical-sample stamps, and declared measured state only.
 
 ### Neutral
-- **Ink Navy:** headings and primary content.
-- **Soft Ink:** supporting explanations and metadata.
+- **Ink Navy:** headings, claim-boundary rails, and primary content.
+- **Soft Ink:** supporting explanations, metadata, and provenance.
 - **Cool Paper:** page ground.
-- **Surface White:** active work areas and controls.
-- **Rules:** boundaries, dividers, and measurement structure.
+- **Surface White:** analysis outputs and active work areas.
+- **Rules:** section boundaries, tables, and comparison structure.
 
 **The Measured Citron Rule.** Citron labels a measured or declared state; it is not decoration and never replaces a textual label.
 
@@ -98,63 +104,79 @@ The palette separates action, measured output, and neutral evidence without usin
 
 **Display and Body Font:** platform UI sans-serif stack.
 
-**Character:** Workmanlike and direct. Weight, size, and spacing—not a decorative type pairing—create hierarchy.
+**Character:** Workmanlike and direct. Tight display tracking gives the thesis authority; compact labels and tabular numbers make evidence scan quickly.
 
 ### Hierarchy
-- **Display:** bold, tightly tracked, and used only for the page thesis.
-- **Headline:** 1.36–1.5rem bold for major workbench sections.
-- **Title:** 1.0–1.14rem bold for controls and venue names.
-- **Body:** 1rem base with explanatory copy generally limited to about 70 characters.
-- **Label:** 0.62–0.76rem with strong weight for categories, metadata, and controls.
+- **Display:** bold, tightly tracked, and reserved for each route’s thesis.
+- **Headline:** large section titles with a compact line height and balanced wrapping.
+- **Title:** bold 1.0–1.36rem labels for workbench regions and ranked candidates.
+- **Body:** 1rem base; analytical prose stays near 74 characters per line.
+- **Label:** 0.60–0.76rem with strong weight for evidence state, metadata, controls, and provenance.
 
-**The Plain-Language Rule.** Technical measurements may be compact, but every result first receives a readable reason.
+**The Plain-Language Rule.** Technical measurements may be compact, but every result first receives a readable interpretation or reason.
 
 ## Layout
 
-The desktop workbench uses an approximately 29/71 split: persistent conditions and signals at left, ranked evidence at right. The shell reaches 1380px with 32px outer gutters. At 900px the workbench becomes one column, preserving controls before results. At 560px padding tightens, readouts become horizontal, and score details move to a two-column grid. Type remains fixed except for the page title.
+The shared shell reaches 1380px with 32px desktop gutters. The analysis route uses a thesis-and-path first viewport, a three-part executive strip, then a 240px sticky section rail beside a reading column capped near 980px. Discovery Mode uses an evidence bridge followed by an approximately 29/71 conditions-and-ranking workbench.
+
+At 1000px, both routes stack: the analysis rail becomes a two-part index and the workbench places controls before results. At 700px, all core structures become one column, generated output tables switch to labeled record lists, gutters tighten to 12px, and fixed-position aids remain readable without horizontal page overflow.
+
+Spacing expands at analytical section boundaries and contracts inside related evidence. There is always more room before a new section heading than after it.
 
 ## Elevation & Depth
 
-The system is flat by default. One soft, offset ambient shadow lifts the complete workbench from the cool paper; internal hierarchy uses tonal layers and one-pixel rules rather than nested elevation.
+The system is flat by default. Tonal layers and one-pixel rules carry most hierarchy. One soft offset ambient shadow lifts a complete evidence plate or workbench; individual findings and recommendations never receive separate elevation.
 
-**The One Work Surface Rule.** Individual recommendations are ruled rows, never separately elevated cards.
+**The One Work Surface Rule.** Ranked recommendations are ruled rows within one work surface, never separately elevated cards.
 
 ## Shapes
 
-Corners are compact and functional: 4px for small labels, 6px for controls and readouts, 10px for explanatory panels. Rules are one pixel. The asymmetrical brand mark is the only deliberately unusual silhouette.
+Corners are compact and functional: 4px for labels, 6px for controls and readouts, and 10px for explanatory or warning panels. Tables and major work surfaces remain square. Rules are one pixel. The asymmetrical D→P mark is the only deliberately unusual silhouette.
 
 ## Components
 
+### Navigation
+- A 64px sticky desktop masthead becomes 56px on mobile.
+- Active routes use a textual `aria-current` state plus a blue bottom rule.
+- The dark claim rail remains directly below navigation and names its boundary in citron text.
+
 ### Action controls
-- **Shape:** compact 6px corners and generous keyboard/touch targets.
-- **Selected:** white text on Action Blue plus native radio semantics.
-- **Focus:** three-pixel visible blue outline offset from the control.
-- **Disabled:** cool neutral fill and muted ink.
+- **Shape:** compact 6px corners and at least 44px touch height.
+- **Selected:** white text on Action Blue plus native input semantics.
+- **Focus:** three-pixel high-contrast outline with offset.
+- **Disabled:** cool neutral fill and explicit muted state.
 
 ### Inputs
-- **Style:** white field, dark rule, 46px minimum height, visible label.
-- **Focus:** the shared high-contrast outline.
+- White fill, dark one-pixel rule, 46px minimum height, visible label, and the shared focus outline.
+
+### Evidence sections
+- Structure: section title, named evidence-state label, narrative, prominent output, and optional executed-code disclosure.
+- Charts always have concise alt text and an interpretation caption.
+- Wide generated outputs switch to key/value records on narrow screens.
 
 ### Result list
-- **Structure:** rank marker, venue/category, final score, plain-language reason, description, then optional breakdown.
-- **Separation:** one-pixel horizontal rules; no per-result shadows.
-- **Details:** native disclosure behavior with a four-column score grid, two columns on mobile.
+- Structure: rank, city/category provenance, pseudonymous label, final score, plain-language reason, aggregate support, then optional breakdown.
+- Native disclosure opens a four-column score grid, two columns on mobile.
+- Candidate novelty, category familiarity, and profile entropy are always named separately.
 
 ### Status panels
-- **Loading:** content-shaped skeleton rows.
-- **Error:** named problem, recovery instruction, and retry action.
-- **Neutral fallback:** citron-tinted panel with explicit limited-history language.
+- Loading uses content-shaped ruled skeleton rows.
+- Error names the unavailable service and recovery action.
+- Neutral fallback uses a citron-tinted panel with explicit limited-history language.
+- Historical relevance uses a named amber warning with plain text, never color alone.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep user intent, confidence, and output visible in the same viewport where practical.
-- **Do** label synthetic data and uncertain inference in text.
-- **Do** preserve native semantics and visible focus.
-- **Do** use ruled rows for ranked, comparable content.
+- **Do** keep provenance, claim strength, and output visible near each other.
+- **Do** distinguish observation, interpretation, hypothesis, implementation, and limitation in text.
+- **Do** label synthetic profiles, historical aggregates, and uncertain inference explicitly.
+- **Do** use ruled rows and tables for comparable evidence.
+- **Do** preserve native semantics, visible focus, live announcements, and reduced-motion behavior.
 
 ### Don't:
-- **Don't** use entropy as identity, personality, or intent language.
+- **Don't** use entropy as identity, personality, venue quality, freshness, or intent language.
 - **Don't** scatter citron as decorative accent.
-- **Don't** nest cards or elevate each result independently.
+- **Don't** nest cards or elevate individual findings and results.
 - **Don't** hide critical explanations behind hover or color alone.
+- **Don't** invent venue proper names when the source does not provide them.

@@ -14,7 +14,7 @@ const profiles = [
     weekend_delta: 0.06,
     observation_count: 154,
     confidence: 0.84,
-    familiar_categories: ["Coffee Shop"],
+    familiar_categories: ["Coffee Shop", "Train Station"],
   },
   {
     id: "sparse",
@@ -28,42 +28,52 @@ const profiles = [
   },
 ];
 
+const recommendations = [
+  {
+    id: "candidate-nyc-001",
+    label: "NYC · Train Station · Candidate 01",
+    city: "NYC",
+    category: "Train Station",
+    historical_checkins: 1145,
+    distinct_historical_visitors: 265,
+    aggregate_popularity_percentile: 100,
+    baseline_relevance: 0.95,
+    aggregate_novelty: 0,
+    provenance: "Aggregated historical Foursquare sample",
+    final_score: 0.81,
+    category_familiarity: 1,
+    category_discovery: 0,
+    novelty_score: 0,
+    reason: "Higher aggregate popularity supports your familiar choice.",
+  },
+  {
+    id: "candidate-nyc-007",
+    label: "NYC · Burrito Place · Candidate 07",
+    city: "NYC",
+    category: "Burrito Place",
+    historical_checkins: 35,
+    distinct_historical_visitors: 25,
+    aggregate_popularity_percentile: 13,
+    baseline_relevance: 0.43,
+    aggregate_novelty: 0.87,
+    provenance: "Aggregated historical Foursquare sample",
+    final_score: 0.76,
+    category_familiarity: 0,
+    category_discovery: 1,
+    novelty_score: 0.9,
+    reason: "Less commonly visited in this historical sample.",
+  },
+];
+
 const recommendationResponse = {
   profile: profiles[0],
   context: "weekday",
   discovery_mode: "balanced",
   applied_discovery: 0.57,
   uses_neutral_fallback: false,
-  ranking_summary: "Your balanced choice combines relevance with measured novelty.",
-  recommendations: [
-    {
-      id: "venue-02",
-      name: "Northline Coffee Works",
-      category: "Coffee Shop",
-      description: "A fictional coffee counter.",
-      final_score: 0.81,
-      baseline_relevance: 0.9,
-      venue_novelty: 0.42,
-      category_novelty: 0.12,
-      novelty_score: 0.3,
-      distance_penalty: 0.08,
-      reason: "A new venue in a familiar activity category.",
-    },
-    {
-      id: "venue-07",
-      name: "Afterimage Gallery",
-      category: "Gallery",
-      description: "A fictional artist-run space.",
-      final_score: 0.76,
-      baseline_relevance: 0.65,
-      venue_novelty: 0.82,
-      category_novelty: 0.78,
-      novelty_score: 0.8,
-      distance_penalty: 0.11,
-      reason: "A different kind of activity.",
-    },
-  ],
-  disclaimer: "Illustrative ranking over fictional venues; not a validated recommender.",
+  ranking_summary: "Your balanced choice combines aggregate popularity with candidate novelty.",
+  recommendations,
+  disclaimer: "Illustrative discovery ranking over privacy-safe historical candidates; not a trained or validated recommender.",
 };
 
 function jsonResponse(data: unknown, ok = true): Promise<Response> {
@@ -81,19 +91,27 @@ describe("DiscoveryExperience", () => {
       vi
         .fn()
         .mockImplementationOnce(() => jsonResponse(profiles))
-        .mockImplementation(() => jsonResponse(recommendationResponse)),
+        .mockImplementation((_, options?: RequestInit) => {
+          const body = options?.body ? JSON.parse(options.body as string) : {};
+          const next = body.discovery_mode === "something_new"
+            ? { ...recommendationResponse, discovery_mode: "something_new", recommendations: [...recommendations].reverse() }
+            : recommendationResponse;
+          return jsonResponse(next);
+        }),
     );
   });
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it("renders the initial Mixed, Weekday, Balanced state and returned order", async () => {
+  it("renders the evidence bridge, initial state, provenance, and returned order", async () => {
     render(<DiscoveryExperience />);
 
     expect(screen.getByRole("heading", { name: "Context-Aware Discovery" })).toBeInTheDocument();
-    expect(await screen.findByText("Northline Coffee Works")).toBeInTheDocument();
-    expect(screen.getByText("Afterimage Gallery")).toBeInTheDocument();
-    expect(screen.getByText("A new venue in a familiar activity category.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "How evidence becomes a ranking hypothesis" })).toBeInTheDocument();
+    expect(await screen.findByText("NYC · Train Station · Candidate 01")).toBeInTheDocument();
+    expect(screen.getByText("NYC · Burrito Place · Candidate 07")).toBeInTheDocument();
+    expect(screen.getByText("Higher aggregate popularity supports your familiar choice.")).toBeInTheDocument();
+    expect(screen.getByText(/historical sample cannot establish/i)).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Balanced" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Weekday" })).toBeChecked();
     expect(screen.getByLabelText("Demo profile")).toHaveValue("mixed");
@@ -102,7 +120,7 @@ describe("DiscoveryExperience", () => {
   it("sends the expected request when keyboard-operable controls change", async () => {
     const user = userEvent.setup();
     render(<DiscoveryExperience />);
-    await screen.findByText("Northline Coffee Works");
+    await screen.findByText("NYC · Train Station · Candidate 01");
 
     await user.selectOptions(screen.getByLabelText("Demo profile"), "sparse");
     await user.click(screen.getByRole("radio", { name: "Weekend" }));
@@ -122,6 +140,22 @@ describe("DiscoveryExperience", () => {
     });
   });
 
+  it("visibly reranks and announces the change when explicit preference changes", async () => {
+    const user = userEvent.setup();
+    render(<DiscoveryExperience />);
+    await screen.findByText("NYC · Train Station · Candidate 01");
+
+    await user.click(screen.getByRole("radio", { name: "Show me something new" }));
+
+    await waitFor(() => {
+      const rankedLabels = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
+      expect(rankedLabels[0]).toBe("NYC · Burrito Place · Candidate 07");
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("recommendations updated");
+    expect(screen.getAllByText("Aggregate candidate novelty").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Category familiarity").length).toBeGreaterThan(0);
+  });
+
   it("shows loading and a recoverable API error", async () => {
     let rejectRequest: (reason: Error) => void = () => undefined;
     vi.mocked(fetch)
@@ -137,12 +171,12 @@ describe("DiscoveryExperience", () => {
 
     const user = userEvent.setup();
     render(<DiscoveryExperience />);
-    expect(await screen.findByText("Re-ranking fictional places…")).toBeInTheDocument();
+    expect(await screen.findByText("Re-ranking historical candidates…")).toBeInTheDocument();
 
     rejectRequest(new Error("offline"));
     expect(await screen.findByRole("alert")).toHaveTextContent("couldn’t reach the local ranking API");
 
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Northline Coffee Works")).toBeInTheDocument();
+    expect(await screen.findByText("NYC · Train Station · Candidate 01")).toBeInTheDocument();
   });
 });

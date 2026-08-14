@@ -1,4 +1,4 @@
-"""FastAPI application serving safe synthetic Discovery Mode fixtures."""
+"""FastAPI application serving safe profiles and aggregate candidates."""
 
 import json
 import os
@@ -21,7 +21,10 @@ from backend.api.schemas import (
 )
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
-DISCLAIMER = "Illustrative ranking over fictional venues; not a validated recommender."
+DISCLAIMER = (
+    "Illustrative discovery ranking over privacy-safe historical candidates; "
+    "not a trained or validated recommender or current place guide."
+)
 
 
 def _load_fixture(filename: str, schema: type[Profile] | type[CandidateVenue]):

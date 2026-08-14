@@ -4,57 +4,62 @@
 
 ## Platform
 
-web
-
-## Stack
-
-Next.js App Router with React and TypeScript; FastAPI and Pydantic; deterministic in-memory synthetic fixtures. Local execution is sufficient.
+Web: Next.js App Router with React and TypeScript; FastAPI and Pydantic; committed generated artifacts. Local execution is sufficient.
 
 ## Users
 
-Interview reviewers assessing data-science reasoning, product judgment, and engineering range. They operate a short demonstration to understand how evidence becomes a cautious, testable product hypothesis.
+Interview reviewers assessing data-science reasoning, product judgment, privacy boundaries, and engineering range. They need to understand the complete path from historical evidence to a cautious, testable product hypothesis.
 
 ## Product Purpose
 
-Context-Aware Discovery extends the authoritative location-entropy analysis into a bounded demonstration. Its Discovery Mode lets reviewers change a synthetic profile, temporal context, and explicit discovery preference, then inspect deterministic reranking and its reasons.
+**From Data to Product** joins the authoritative location-entropy analysis and **Context-Aware Discovery** prototype into one case study. The analysis route renders a deterministic presentation artifact generated from the executed notebook. Discovery Mode lets reviewers change a synthetic profile, temporal context, and explicit preference, then inspect deterministic reranking over privacy-safe, data-derived historical candidates.
 
-Success means reviewers can follow: observed evidence → cautious interpretation → user need → product hypothesis → interactive behavior → evaluation plan, without mistaking the prototype for a trained or validated recommender.
+Success means reviewers can follow: data provenance → preparation → metric → findings → limits → opportunity comparison → selected hypothesis → interactive behavior → evaluation plan, without mistaking entropy for a venue score or the prototype for a validated recommender.
 
 ## Positioning
 
-The prototype makes venue novelty and activity-category novelty separately inspectable, combines them with confidence-aware temporal context, and always gives explicit preference dominant influence.
+The project distinguishes three concepts:
+
+1. normalized venue/category entropy describes diversity in an observed synthetic profile history;
+2. aggregate candidate novelty is inverse popularity in the historical sample;
+3. category familiarity indicates whether the candidate category appears in that synthetic profile history.
+
+Explicit intent remains the strongest ranking input.
 
 ## Operating Context
 
-Reviewers run a Python API and Next.js frontend locally, open `/prototype/discovery`, change controls, inspect ranking explanations, and read methodology, privacy, and future experiment notes. The executed notebook remains the authoritative analysis.
+Reviewers open `/` for the generated case study and `/prototype/discovery` for the interactive hypothesis. The static analysis route requires neither FastAPI nor raw data. Discovery Mode requires the local API. Offline generation alone reads the executed notebook or source check-ins.
 
 ## Capabilities and Constraints
 
-- Product concept: **Context-Aware Discovery**. Prototype feature: **Discovery Mode**.
-- Prompt: “What feels right today?” Choices: Keep it familiar / Balanced / Show me something new.
-- Four anonymous synthetic profiles and fictional venue candidates only.
-- Transparent deterministic ranker; no training, persistence, authentication, external APIs, maps, source-record browser access, or quality claims.
-- Entropy is a ranking signal, never a personality label.
+- Executed notebook remains authoritative and downloadable.
+- Generated analysis artifact preserves narrative, equations, aggregate tables, charts, and collapsible code.
+- Artifact metadata exposes source path, execution-derived generation time, and source fingerprint.
+- Four anonymous synthetic profiles; no real source users.
+- Candidate catalog aggregates actual historical NYC/Tokyo venue records under minimum-support and sensitive-category exclusions.
+- Source dataset has no venue names; candidates use city/category/number pseudonyms.
+- No source venue IDs, user IDs, exact coordinates, timestamps, trajectories, private-home candidates, maps, live venue data, persistence, authentication, external APIs, or trained model.
+- “New” means new to the synthetic profile or less commonly visited in the historical sample—not newly opened.
 - Sparse history uses confidence-adjusted neutral fallback; explicit intent dominates inferred behavior.
-- The API loads safe fixtures at startup and exposes no source IDs, coordinates, or trajectories.
-- Prototype is local-only unless deployment is decided later.
+- Historical candidates are not a current venue directory and may no longer exist.
 
 ## Brand Commitments
 
-Clear, cautious, evidence-led voice. Observations, interpretations, hypotheses, and implementation choices must remain distinguishable. Persistent disclaimer: illustrative ranking over fictional venues; not a validated recommender.
+Clear, cautious, evidence-led voice. Observations, interpretations, hypotheses, implementation choices, and limits remain visually distinguishable. Persistent claim boundary: illustrative ranking over privacy-safe historical candidates; not a trained or validated recommender or current place guide.
 
 ## Evidence on Hand
 
-The executed notebook at `notebooks/location_entropy_analysis.ipynb` provides aggregate findings: similar city medians; higher weekend entropy for most eligible users; distinct venue/category diversity; and observation-count dependence. `PROTOTYPE_SPEC.md` records the exact claim boundary, ranking policy, API contract, UX, safeguards, and acceptance criteria. No customer claims, outcome evidence, or recommendation-effectiveness evidence exists and none may be fabricated.
+The executed notebook provides aggregate findings: similar city medians; higher weekend entropy for most eligible users; distinct venue/category diversity; and observation-count dependence. No customer claims, outcome evidence, current venue evidence, or recommendation-effectiveness evidence exists.
 
 ## Product Principles
 
 1. Explicit intent beats inferred defaults.
-2. Explain behavior without turning metrics into identity.
-3. Show uncertainty and fall back neutrally when evidence is sparse.
-4. Keep synthetic demonstration data separate from source check-ins.
-5. Treat the prototype as a hypothesis that requires randomized evaluation.
+2. Profile metrics and candidate signals remain separate and named.
+3. Explain behavior without turning metrics into identity or quality.
+4. Show uncertainty and fall back neutrally when evidence is sparse.
+5. Minimize and aggregate source data before it reaches product surfaces.
+6. Treat the prototype as a hypothesis requiring randomized evaluation.
 
 ## Accessibility & Inclusion
 
-Keyboard-operable controls, visible focus, live result announcements, WCAG AA contrast, reduced-motion support, and usable layouts around 375px and 1440px.
+Semantic headings and landmarks, keyboard-operable navigation and controls, accessible disclosures, visible focus, table captions, chart alternatives, live reranking announcements, WCAG AA contrast, reduced-motion support, and usable layouts around 375px and 1440px.
