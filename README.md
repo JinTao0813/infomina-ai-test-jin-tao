@@ -23,6 +23,12 @@ The Next.js site has two connected views:
 
 Static analysis content builds and renders without FastAPI or the raw check-in files. Only the interactive prototype calls the local API.
 
+![Architecture: static notebook presentation plus local Discovery Mode API](docs/prototype-architecture.svg)
+
+![Discovery Mode showing transparent ranking controls and score explanations](apps/frontend/public/prototype/discovery-mode.png)
+
+A [mobile reference screenshot](docs/screenshots/discovery-mobile.png) is also committed.
+
 ## Run locally
 
 Requires Python 3.11+, [`uv`](https://docs.astral.sh/uv/), npm, and Node.js `^20.19.0 || >=22.12.0`.
@@ -35,7 +41,7 @@ uv run uvicorn backend.api.main:app --reload
 
 # Terminal 2: website
 cd apps/frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -57,6 +63,18 @@ Useful API endpoints:
 - `GET /docs`
 
 Development CORS allows only `http://localhost:3000` and `http://127.0.0.1:3000` by default. Override with comma-separated `DISCOVERY_FRONTEND_ORIGINS`.
+
+## Re-run the analysis
+
+After downloading the raw files described under [Dataset](#dataset), execute the authoritative notebook in place:
+
+```bash
+uv run jupyter nbconvert --to notebook --execute --inplace \
+  notebooks/location_entropy_analysis.ipynb \
+  --ExecutePreprocessor.timeout=300
+```
+
+Then regenerate the website artifact with the command below. The notebook does not require either prototype service.
 
 ## Generated notebook presentation
 
@@ -152,7 +170,7 @@ The test seams are the generated artifact contract, candidate-catalog output, Fa
 
 ## Dataset
 
-The recommended EPFL mobility data were unavailable, so this analysis uses the **Foursquare TSMC 2014 NYC and Tokyo Check-in Dataset**.
+I could not access the recommended EPFL mobility data, so this analysis uses the **Foursquare TSMC 2014 NYC and Tokyo Check-in Dataset**.
 
 Download from the [dataset author’s page](https://sites.google.com/site/yangdingqi/home/foursquare-dataset), extract locally, and preserve the raw headerless Latin-1 TSV files unchanged:
 
@@ -163,7 +181,7 @@ dataset_tsmc2014/
   dataset_TSMC2014_readme.txt
 ```
 
-`dataset_tsmc2014/` is ignored by Git.
+`dataset_tsmc2014/` is ignored by Git. Each headerless Latin-1 TSV row contains, in order: `user_id`, `venue_id`, `category_id`, `category_name`, `latitude`, `longitude`, `timezone_offset_minutes`, and `utc_time`.
 
 | File | Rows | SHA-256 |
 |---|---:|---|

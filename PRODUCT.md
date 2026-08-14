@@ -34,7 +34,7 @@ Reviewers open `/` for the generated case study and `/prototype/discovery` for t
 
 - Executed notebook remains authoritative and downloadable.
 - Generated analysis artifact preserves narrative, equations, aggregate tables, charts, and collapsible code.
-- Artifact metadata exposes source path, execution-derived generation time, and source fingerprint.
+- Artifact metadata exposes source path, recorded generation time, and source fingerprint.
 - Four anonymous synthetic profiles; no real source users.
 - Candidate catalog aggregates actual historical NYC/Tokyo venue records under minimum-support and sensitive-category exclusions.
 - Source dataset has no venue names; candidates use city/category/number pseudonyms.
