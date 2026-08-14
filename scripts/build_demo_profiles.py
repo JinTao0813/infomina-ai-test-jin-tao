@@ -13,7 +13,7 @@ TARGET = Path(__file__).parents[1] / "backend/api/fixtures/profiles.json"
 PROFILES = [
     {
         "id": "routine",
-        "label": "Routine-oriented demo",
+        "label": "Concentrated history · 180 check-ins",
         "venue_entropy": 0.72,
         "category_entropy": 0.58,
         "weekend_delta": 0.04,
@@ -23,7 +23,7 @@ PROFILES = [
     },
     {
         "id": "mixed",
-        "label": "Mixed demo",
+        "label": "Varied history · 154 check-ins",
         "venue_entropy": 0.85,
         "category_entropy": 0.76,
         "weekend_delta": 0.06,
@@ -38,7 +38,7 @@ PROFILES = [
     },
     {
         "id": "exploration",
-        "label": "Exploration-oriented demo",
+        "label": "Broad history · 240 check-ins",
         "venue_entropy": 0.95,
         "category_entropy": 0.89,
         "weekend_delta": 0.08,
@@ -48,7 +48,7 @@ PROFILES = [
     },
     {
         "id": "sparse",
-        "label": "New / sparse history demo",
+        "label": "Limited history · 8 check-ins",
         "venue_entropy": 0.62,
         "category_entropy": 0.51,
         "weekend_delta": 0.11,

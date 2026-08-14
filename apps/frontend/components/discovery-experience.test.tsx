@@ -8,7 +8,7 @@ import DiscoveryExperience from "./discovery-experience";
 const profiles = [
   {
     id: "mixed",
-    label: "Mixed demo",
+    label: "Varied history · 154 check-ins",
     venue_entropy: 0.85,
     category_entropy: 0.76,
     weekend_delta: 0.06,
@@ -18,7 +18,7 @@ const profiles = [
   },
   {
     id: "sparse",
-    label: "New / sparse history demo",
+    label: "Limited history · 8 check-ins",
     venue_entropy: 0.62,
     category_entropy: 0.51,
     weekend_delta: 0.11,
@@ -44,7 +44,7 @@ const recommendations = [
     category_familiarity: 1,
     category_discovery: 0,
     novelty_score: 0,
-    reason: "Higher aggregate popularity supports your familiar choice.",
+    reason: "Higher aggregate popularity supports your preference for popular candidates.",
   },
   {
     id: "candidate-nyc-007",
@@ -71,7 +71,7 @@ const recommendationResponse = {
   discovery_mode: "balanced",
   applied_discovery: 0.57,
   uses_neutral_fallback: false,
-  ranking_summary: "Your balanced choice combines aggregate popularity with candidate novelty.",
+  ranking_summary: "Your preference balances aggregate popularity with candidate novelty.",
   recommendations,
   disclaimer: "Illustrative discovery ranking over privacy-safe historical candidates; not a trained or validated recommender.",
 };
@@ -110,11 +110,11 @@ describe("DiscoveryExperience", () => {
     expect(screen.getByRole("heading", { name: "How evidence becomes a ranking hypothesis" })).toBeInTheDocument();
     expect(await screen.findByText("NYC · Train Station · Candidate 01")).toBeInTheDocument();
     expect(screen.getByText("NYC · Burrito Place · Candidate 07")).toBeInTheDocument();
-    expect(screen.getByText("Higher aggregate popularity supports your familiar choice.")).toBeInTheDocument();
+    expect(screen.getByText("Higher aggregate popularity supports your preference for popular candidates.")).toBeInTheDocument();
     expect(screen.getByText(/historical sample cannot establish/i)).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Balanced" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Balance both" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Weekday" })).toBeChecked();
-    expect(screen.getByLabelText("Demo profile")).toHaveValue("mixed");
+    expect(screen.getByLabelText("Example check-in history")).toHaveValue("mixed");
   });
 
   it("sends the expected request when keyboard-operable controls change", async () => {
@@ -122,9 +122,9 @@ describe("DiscoveryExperience", () => {
     render(<DiscoveryExperience />);
     await screen.findByText("NYC · Train Station · Candidate 01");
 
-    await user.selectOptions(screen.getByLabelText("Demo profile"), "sparse");
+    await user.selectOptions(screen.getByLabelText("Example check-in history"), "sparse");
     await user.click(screen.getByRole("radio", { name: "Weekend" }));
-    await user.click(screen.getByRole("radio", { name: "Show me something new" }));
+    await user.click(screen.getByRole("radio", { name: "Favor less-common candidates" }));
 
     await waitFor(() => {
       const calls = vi.mocked(fetch).mock.calls;
@@ -145,7 +145,7 @@ describe("DiscoveryExperience", () => {
     render(<DiscoveryExperience />);
     await screen.findByText("NYC · Train Station · Candidate 01");
 
-    await user.click(screen.getByRole("radio", { name: "Show me something new" }));
+    await user.click(screen.getByRole("radio", { name: "Favor less-common candidates" }));
 
     await waitFor(() => {
       const rankedLabels = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);

@@ -23,9 +23,9 @@ const discoveryOptions: Array<{
   label: string;
   hint: string;
 }> = [
-  { value: "familiar", label: "Keep it familiar", hint: "Historical popularity leads" },
-  { value: "balanced", label: "Balanced", hint: "A measured mix" },
-  { value: "something_new", label: "Show me something new", hint: "Candidate novelty has more weight" },
+  { value: "familiar", label: "Favor popular candidates", hint: "Popularity gets more weight" },
+  { value: "balanced", label: "Balance both", hint: "Mix popularity and discovery" },
+  { value: "something_new", label: "Favor less-common candidates", hint: "Discovery gets more weight" },
 ];
 
 export default function DiscoveryExperience() {
@@ -50,7 +50,7 @@ export default function DiscoveryExperience() {
       })
       .catch((requestError: unknown) => {
         if ((requestError as Error).name !== "AbortError") {
-          setError("We couldn’t load the synthetic profiles from the local API.");
+          setError("We couldn’t load the example histories from the local API.");
         }
       })
       .finally(() => setIsLoadingProfiles(false));
@@ -130,7 +130,7 @@ export default function DiscoveryExperience() {
             </li>
           </ol>
           <p className="definition-line">
-            <strong>“New” here means</strong> new to the synthetic profile or less commonly visited in this historical sample—not newly opened.
+            <strong>“New” here means</strong> a category absent from the selected example history or a candidate that was less common in this historical sample—not newly opened.
           </p>
         </section>
 
@@ -141,13 +141,16 @@ export default function DiscoveryExperience() {
               <span>Changes rerank immediately</span>
             </div>
 
-            <label className="select-label" htmlFor="profile">Synthetic profile</label>
+            <label className="select-label" htmlFor="profile">Example check-in history</label>
+            <p className="control-help" id="profile-help">
+              Choose one of four fictional histories—not a real person. Each preset changes the history-based signals used to rank the same candidates.
+            </p>
             <select
               id="profile"
               value={profileId}
               onChange={(event) => setProfileId(event.target.value)}
               disabled={isLoadingProfiles || profiles.length === 0}
-              aria-label="Demo profile"
+              aria-describedby="profile-help"
             >
               {isLoadingProfiles && <option>Loading profiles…</option>}
               {profiles.map((profile) => (
@@ -174,8 +177,11 @@ export default function DiscoveryExperience() {
               </div>
             </fieldset>
 
-            <fieldset className="control-group discovery-options">
-              <legend>What feels right today?</legend>
+            <fieldset className="control-group discovery-options" aria-describedby="preference-help">
+              <legend>Ranking preference</legend>
+              <p className="control-help" id="preference-help">
+                Your choice is the strongest input. It sets the tradeoff between candidates that were popular in the historical sample and those that were less common.
+              </p>
               {discoveryOptions.map((option) => (
                 <label key={option.value}>
                   <input
@@ -197,15 +203,18 @@ export default function DiscoveryExperience() {
             {selectedProfile && (
               <section className="signals" aria-labelledby="signals-title">
                 <div className="panel-heading">
-                  <h2 id="signals-title">Profile signals</h2>
-                  <span>Observed history, not identity</span>
+                  <h2 id="signals-title">Signals from this history</h2>
+                  <span>Inputs, not identity</span>
                 </div>
-                <SignalRow label="Normalized venue entropy" value={selectedProfile.venue_entropy} />
-                <SignalRow label="Normalized category entropy" value={selectedProfile.category_entropy} />
-                <SignalRow label="History confidence" value={selectedProfile.confidence} />
+                <p className="signals-help">
+                  Higher diversity means the fictional check-ins are spread across more places or categories. Evidence strength controls how much the ranker trusts those patterns.
+                </p>
+                <SignalRow label="Place diversity (normalized entropy)" value={selectedProfile.venue_entropy} />
+                <SignalRow label="Category diversity (normalized entropy)" value={selectedProfile.category_entropy} />
+                <SignalRow label="Evidence strength" value={selectedProfile.confidence} />
                 <div className="signal-meta">
-                  <span>{selectedProfile.observation_count} synthetic observations</span>
-                  <span>{selectedProfile.weekend_delta >= 0 ? "+" : ""}{selectedProfile.weekend_delta.toFixed(2)} weekend difference</span>
+                  <span>{selectedProfile.observation_count} fictional check-ins</span>
+                  <span>{selectedProfile.weekend_delta >= 0 ? "+" : ""}{selectedProfile.weekend_delta.toFixed(2)} weekend diversity difference</span>
                 </div>
                 <p className="demo-note">Synthetic values anchored to aggregate ranges in the executed analysis.</p>
               </section>
@@ -219,8 +228,8 @@ export default function DiscoveryExperience() {
                 <p>Same safe candidate pool. Different transparent weighting.</p>
               </div>
               {result && (
-                <div className="applied-readout" aria-label={`Applied discovery ${Math.round(result.applied_discovery * 100)} percent`}>
-                  <span>Applied discovery</span>
+                <div className="applied-readout" aria-label={`Resulting discovery level ${Math.round(result.applied_discovery * 100)} percent`}>
+                  <span>Resulting discovery level</span>
                   <strong>{Math.round(result.applied_discovery * 100)}%</strong>
                 </div>
               )}
@@ -284,7 +293,7 @@ export default function DiscoveryExperience() {
                             <ScoreValue label="Combined novelty input" value={recommendation.novelty_score} />
                           </div>
                           <p className="formula-note">
-                            Baseline relevance transforms aggregate historical popularity. Candidate novelty is its inverse. Category familiarity comes from the selected synthetic profile. Profile entropy only adjusts applied discovery; it is never a candidate score. Generated candidate ID breaks ties.
+                            Baseline relevance transforms aggregate historical popularity. Candidate novelty is its inverse. Category familiarity comes from the selected example history. History entropy only adjusts applied discovery; it is never a candidate score. Generated candidate ID breaks ties.
                           </p>
                         </details>
                       </div>

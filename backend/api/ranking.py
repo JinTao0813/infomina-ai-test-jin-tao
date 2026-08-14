@@ -78,19 +78,19 @@ def ranking_summary(
         )
     if context is Context.WEEKEND and profile.weekend_delta > 0:
         return (
-            "Your choice leads, with a modest weekend adjustment supported only "
-            "by this synthetic profile’s observed history."
+            "Your ranking preference leads, with a modest weekend adjustment "
+            "supported only by the selected example history."
         )
     if discovery_mode is DiscoveryMode.FAMILIAR:
-        return "Your familiar choice emphasizes aggregate historical popularity."
+        return "Your preference gives aggregate historical popularity more weight."
     if discovery_mode is DiscoveryMode.SOMETHING_NEW:
         return (
-            "Your discovery choice gives inverse historical popularity and "
-            "unfamiliar categories more weight."
+            "Your preference gives less-common candidates and categories absent "
+            "from the selected example history more weight."
         )
     return (
-        "Your balanced choice combines aggregate historical popularity with "
-        "candidate novelty and category familiarity."
+        "Your preference balances aggregate historical popularity with how common "
+        "each candidate and category was in the selected example history."
     )
 
 
@@ -148,24 +148,24 @@ def _explain(
     if discovery_mode is DiscoveryMode.FAMILIAR and candidate.baseline_relevance >= 0.75:
         return (
             "Higher aggregate popularity in the historical sample supports your "
-            "familiar choice."
+            "preference for popular candidates."
         )
     if familiar and candidate.aggregate_novelty >= 0.5:
         return (
             "Less commonly visited in this historical sample, within a category "
-            "familiar to the synthetic profile."
+            "present in the selected example history."
         )
     if not familiar and context is Context.WEEKEND:
         return (
-            "A category outside this synthetic profile’s familiar history, with "
-            "a modest weekend adjustment."
+            "A category absent from the selected example history, with a modest "
+            "weekend adjustment."
         )
     if not familiar:
         return (
-            "A category outside this synthetic profile’s familiar history, surfaced "
-            "as a separate discovery signal."
+            "A category absent from the selected example history, surfaced as a "
+            "separate discovery signal."
         )
     return (
         "Balances aggregate historical popularity with candidate novelty; the "
-        "category is familiar to this synthetic profile."
+        "category is present in the selected example history."
     )

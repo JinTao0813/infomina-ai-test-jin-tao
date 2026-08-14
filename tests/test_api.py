@@ -10,7 +10,7 @@ from backend.api.schemas import CandidateVenue, Context, DiscoveryMode, Profile
 def routine_profile() -> Profile:
     return Profile(
         id="routine",
-        label="Routine-oriented demo",
+        label="Concentrated history · 180 check-ins",
         venue_entropy=0.72,
         category_entropy=0.58,
         weekend_delta=0.04,
@@ -61,7 +61,7 @@ def test_weekend_adjustment_is_only_applied_on_weekends(
 def test_sparse_history_falls_back_toward_neutral() -> None:
     sparse = Profile(
         id="sparse",
-        label="New / sparse history demo",
+        label="Limited history · 8 check-ins",
         venue_entropy=0.10,
         category_entropy=0.10,
         weekend_delta=0.40,
