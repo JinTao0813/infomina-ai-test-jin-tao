@@ -3,8 +3,8 @@
   "title": "Location entropy in NYC and Tokyo Foursquare check-ins",
   "summary": "Median normalized venue entropy is similar in NYC (**0.853**) and Tokyo (**0.860**). Among users with at least 20 check-ins in each context, median weekend-minus-weekday entropy is **0.058** and **0.059**, respectively. Median normalized category entropy is **0.810** and **0.707**, showing that place and activity diversity are related but not identical.",
   "source_notebook": "notebooks/location_entropy_analysis.ipynb",
-  "source_sha256": "4e91acfbfdf0e8c9df9597f236b3b8da35704d85cdf0187fd3666aaaf89a7013",
-  "generated_at": "2026-08-13T08:28:00.773349Z",
+  "source_sha256": "cb8ac44bbdc15ca351031578afd3ef1241cd3cdb21e7e2bddec20592d8f11348",
+  "generated_at": "2026-08-14T13:55:00Z",
   "sections": [
     {
       "id": "objective-and-executive-summary",

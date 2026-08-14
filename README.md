@@ -80,7 +80,7 @@ uv run python scripts/export_notebook_presentation.py \
   --check
 ```
 
-`npm run build` runs this freshness check before compiling. The generated timestamp comes from the notebook’s latest recorded execution completion time; SHA-256 ties the artifact to the exact source notebook bytes.
+`npm run build` runs this freshness check before compiling. The source-controlled notebook presentation metadata records when the web artifact was generated (the exporter falls back to the latest execution completion time for older notebooks); SHA-256 ties the artifact to the exact source notebook bytes.
 
 ## Privacy-safe candidate catalog
 

@@ -223,6 +223,13 @@ def _copy_markdown_images(
 
 
 def _generated_at(notebook: dict[str, Any]) -> str:
+    recorded_export = (
+        notebook.get("metadata", {})
+        .get("presentation", {})
+        .get("web_generated_at")
+    )
+    if recorded_export:
+        return str(recorded_export)
     timestamps = [
         str(cell.get("metadata", {}).get("execution", {}).get("iopub.status.idle"))
         for cell in notebook.get("cells", [])
