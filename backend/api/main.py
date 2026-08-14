@@ -7,16 +7,15 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from services.api.ranking import (
+from backend.api.ranking import (
     SPARSE_CONFIDENCE_THRESHOLD,
     calculate_applied_discovery,
     rank_candidates,
     ranking_summary,
 )
-from services.api.schemas import (
+from backend.api.schemas import (
     CandidateVenue,
     Profile,
-    ProfileSignals,
     RecommendationRequest,
     RecommendationResponse,
 )
@@ -43,7 +42,7 @@ app = FastAPI(
 origins = [
     origin.strip()
     for origin in os.getenv(
-        "DISCOVERY_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+        "DISCOVERY_FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
     ).split(",")
     if origin.strip()
 ]
@@ -81,7 +80,7 @@ def recommendations(request: RecommendationRequest) -> RecommendationResponse:
         profile, request.context, request.discovery_mode
     )
     return RecommendationResponse(
-        profile=ProfileSignals.model_validate(profile.model_dump()),
+        profile=profile,
         context=request.context,
         discovery_mode=request.discovery_mode,
         applied_discovery=round(applied, 4),

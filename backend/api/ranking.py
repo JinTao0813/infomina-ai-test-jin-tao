@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 
-from services.api.schemas import (
+from backend.api.schemas import (
     CandidateVenue,
     Context,
     DiscoveryMode,
@@ -54,7 +54,7 @@ def rank_candidates(
     )
     scored_candidates = [
         (
-            _calculate_final_score(candidate, applied_discovery),
+            _calculate_final_score(profile, candidate, applied_discovery),
             candidate,
         )
         for candidate in candidates
@@ -92,10 +92,24 @@ def ranking_summary(
     return "Your balanced choice combines relevance with measured venue and activity novelty."
 
 
-def _calculate_final_score(
-    candidate: CandidateVenue, applied_discovery: float
+def _effective_category_novelty(
+    profile: Profile, candidate: CandidateVenue
 ) -> float:
-    novelty_score = 0.60 * candidate.venue_novelty + 0.40 * candidate.category_novelty
+    """Cap novelty for categories represented in this profile's history."""
+    if candidate.category in profile.familiar_categories:
+        return min(candidate.category_novelty, 1 - profile.category_entropy)
+    return candidate.category_novelty
+
+
+def _calculate_novelty_score(profile: Profile, candidate: CandidateVenue) -> float:
+    category_novelty = _effective_category_novelty(profile, candidate)
+    return 0.60 * candidate.venue_novelty + 0.40 * category_novelty
+
+
+def _calculate_final_score(
+    profile: Profile, candidate: CandidateVenue, applied_discovery: float
+) -> float:
+    novelty_score = _calculate_novelty_score(profile, candidate)
     return (
         (1 - applied_discovery) * candidate.baseline_relevance
         + applied_discovery * novelty_score
@@ -110,11 +124,14 @@ def _format_recommendation(
     discovery_mode: DiscoveryMode,
     exact_score: float,
 ) -> Recommendation:
-    novelty_score = 0.60 * candidate.venue_novelty + 0.40 * candidate.category_novelty
+    candidate_payload = candidate.model_dump()
+    candidate_payload["category_novelty"] = _effective_category_novelty(
+        profile, candidate
+    )
     return Recommendation(
-        **candidate.model_dump(),
+        **candidate_payload,
         final_score=round(exact_score, 4),
-        novelty_score=round(novelty_score, 4),
+        novelty_score=round(_calculate_novelty_score(profile, candidate), 4),
         reason=_explain(profile, candidate, context, discovery_mode),
     )
 

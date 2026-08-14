@@ -285,11 +285,12 @@ export default function DiscoveryExperience() {
                         <div className="score-grid">
                           <ScoreValue label="Baseline relevance" value={recommendation.baseline_relevance} />
                           <ScoreValue label="Venue novelty" value={recommendation.venue_novelty} />
-                          <ScoreValue label="Activity novelty" value={recommendation.category_novelty} />
+                          <ScoreValue label="Effective activity novelty" value={recommendation.category_novelty} />
                           <ScoreValue label="Distance penalty" value={recommendation.distance_penalty} inverse />
                         </div>
                         <p className="formula-note">
                           Relevance and novelty are blended by applied discovery;
+                          familiar activity categories use profile-adjusted activity novelty;
                           distance subtracts up to 0.15. Candidate ID breaks ties.
                         </p>
                       </details>

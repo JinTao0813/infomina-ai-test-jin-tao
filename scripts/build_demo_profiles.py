@@ -8,7 +8,7 @@ this offline build.
 import json
 from pathlib import Path
 
-TARGET = Path(__file__).parents[1] / "services/api/fixtures/profiles.json"
+TARGET = Path(__file__).parents[1] / "backend/api/fixtures/profiles.json"
 
 PROFILES = [
     {

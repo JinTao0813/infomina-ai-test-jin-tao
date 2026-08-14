@@ -1,9 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from services.api.main import app
-from services.api.ranking import calculate_applied_discovery, rank_candidates
-from services.api.schemas import CandidateVenue, Context, DiscoveryMode, Profile
+from backend.api.main import app
+from backend.api.ranking import calculate_applied_discovery, rank_candidates
+from backend.api.schemas import CandidateVenue, Context, DiscoveryMode, Profile
 
 
 @pytest.fixture
@@ -103,6 +103,62 @@ def test_ranking_is_deterministic_and_candidate_id_breaks_ties(
     )
 
     assert [item.id for item in result] == ["venue-a", "venue-b"]
+
+
+def test_familiar_categories_change_category_novelty_and_ranking(
+    routine_profile: Profile,
+) -> None:
+    candidates = [
+        CandidateVenue(
+            id="coffee",
+            name="Coffee",
+            category="Coffee Shop",
+            description="Fictional venue.",
+            baseline_relevance=0.5,
+            venue_novelty=0.5,
+            category_novelty=0.9,
+            distance_penalty=0,
+        ),
+        CandidateVenue(
+            id="workshop",
+            name="Workshop",
+            category="Workshop",
+            description="Fictional venue.",
+            baseline_relevance=0.5,
+            venue_novelty=0.5,
+            category_novelty=0.9,
+            distance_penalty=0,
+        ),
+    ]
+
+    coffee_familiar = rank_candidates(
+        profile=routine_profile.model_copy(
+            update={"familiar_categories": ["Coffee Shop"]}
+        ),
+        candidates=candidates,
+        context=Context.WEEKDAY,
+        discovery_mode=DiscoveryMode.BALANCED,
+        limit=2,
+    )
+    workshop_familiar = rank_candidates(
+        profile=routine_profile.model_copy(
+            update={"familiar_categories": ["Workshop"]}
+        ),
+        candidates=candidates,
+        context=Context.WEEKDAY,
+        discovery_mode=DiscoveryMode.BALANCED,
+        limit=2,
+    )
+
+    assert [item.id for item in coffee_familiar] == ["workshop", "coffee"]
+    assert [item.id for item in workshop_familiar] == ["coffee", "workshop"]
+    familiar_category_ceiling = 1 - routine_profile.category_entropy
+    assert coffee_familiar[1].category_novelty == pytest.approx(
+        familiar_category_ceiling
+    )
+    assert workshop_familiar[1].category_novelty == pytest.approx(
+        familiar_category_ceiling
+    )
 
 
 client = TestClient(app)

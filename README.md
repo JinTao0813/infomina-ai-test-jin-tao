@@ -8,11 +8,11 @@ A bounded full-stack companion prototype turns the findings into a testable prod
 
 > **Claim boundary:** The observed patterns motivate product hypotheses. They do not show that high-entropy users prefer novel recommendations, that weekends cause exploration, or that entropy-aware ranking improves engagement. The prototype is an illustrative deterministic ranker—not a trained or validated recommender.
 
-![Discovery Mode prototype](apps/web/public/prototype/discovery-mode.png)
+![Discovery Mode prototype](apps/frontend/public/prototype/discovery-mode.png)
 
 ## Run locally
 
-Requires Python 3.11+, [`uv`](https://docs.astral.sh/uv/), Node.js 20.9+, and npm.
+Requires Python 3.11+, [`uv`](https://docs.astral.sh/uv/), npm, and Node.js `^20.19.0 || >=22.12.0`.
 
 ### Analysis
 
@@ -26,7 +26,7 @@ uv run jupyter lab notebooks/location_entropy_analysis.ipynb
 
 ```bash
 uv sync --frozen
-uv run uvicorn services.api.main:app --reload
+uv run uvicorn backend.api.main:app --reload
 ```
 
 FastAPI runs at `http://localhost:8000`. Useful endpoints:
@@ -37,14 +37,14 @@ FastAPI runs at `http://localhost:8000`. Useful endpoints:
 - `POST /recommendations`
 - Interactive schema: `http://localhost:8000/docs`
 
-Development CORS allows only `http://localhost:3000` and `http://127.0.0.1:3000` by default. Override with a comma-separated `DISCOVERY_WEB_ORIGINS` value.
+Development CORS allows only `http://localhost:3000` and `http://127.0.0.1:3000` by default. Override with a comma-separated `DISCOVERY_FRONTEND_ORIGINS` value.
 
 ### Next.js frontend
 
 In a second terminal:
 
 ```bash
-cd apps/web
+cd apps/frontend
 npm install
 npm run dev
 ```
@@ -64,7 +64,7 @@ Control changes rerank immediately. Default state: **Mixed + Weekday + Balanced*
 uv run pytest
 
 # Frontend
-cd apps/web
+cd apps/frontend
 npm test
 npm run typecheck
 npm run build
@@ -92,13 +92,13 @@ The API loads small safe fixtures at startup. It never loads the 800,000-row sou
 
 Explicit choices map to discovery levels `0.20`, `0.50`, and `0.80`. Explicit intent contributes 70% of applied discovery; confidence-adjusted observed diversity contributes 30%; a reliable weekend difference can add a modest weekend adjustment. Sparse profiles move the inferred signal toward neutral (`0.50`).
 
-Candidates combine baseline relevance, venue novelty, category novelty, and a distance penalty. API responses expose the components and deterministic plain-language reasons. Candidate ID breaks ties.
+Candidates combine baseline relevance, venue novelty, profile-specific category novelty, and a distance penalty. For a category listed in the selected profile’s familiar history, category novelty is capped at `1 − profile.category_entropy`; other categories retain their fixture value. API responses expose the effective components and deterministic plain-language reasons. Candidate ID breaks ties.
 
 The explain-first layout was retained after comparing three temporary structures: recommendation-first, explain-first, and side-by-side comparison. It made cause-and-effect clearest while preserving a practical single-column mobile flow. Losing variants are not part of the final application.
 
 ## Synthetic data and privacy boundary
 
-The four demo profiles and fourteen venues in [`services/api/fixtures`](services/api/fixtures) are synthetic. Their values are anchored to aggregate ranges in the notebook, but they contain no source user IDs, venue IDs, coordinates, private-home categories, or trajectories. Fictional venue names and descriptions are for demonstration only. Source check-ins remain local and Git-ignored.
+The four demo profiles and fourteen venues in [`backend/api/fixtures`](backend/api/fixtures) are synthetic. Their values are anchored to aggregate ranges in the notebook, but they contain no source user IDs, venue IDs, coordinates, private-home categories, or trajectories. Fictional venue names and descriptions are for demonstration only. Source check-ins remain local and Git-ignored.
 
 ## Dataset
 
@@ -125,8 +125,8 @@ The loader reads headerless TSV with Latin-1 encoding and explicit fields: `user
 ## Project layout
 
 ```text
-apps/web/                         # Next.js interaction prototype
-services/api/                    # FastAPI, ranking, Pydantic, fixtures
+apps/frontend/                    # Next.js interaction prototype
+backend/api/                     # FastAPI, ranking, Pydantic, fixtures
 scripts/build_demo_profiles.py   # safe deterministic fixture boundary
 src/location_entropy/            # reusable analysis package
 notebooks/location_entropy_analysis.ipynb

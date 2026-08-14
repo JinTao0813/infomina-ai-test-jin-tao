@@ -313,8 +313,8 @@ SPEC.md
 PROTOTYPE_SPEC.md
 pyproject.toml
 uv.lock
-apps/web/               # Next.js/React/TypeScript prototype
-services/api/           # FastAPI, ranking policy, safe fixtures
+apps/frontend/          # Next.js/React/TypeScript prototype
+backend/api/            # FastAPI, ranking policy, safe fixtures
 scripts/build_demo_profiles.py
 src/location_entropy/   # reusable analysis package
 tests/                  # analysis and API tests

@@ -45,17 +45,6 @@ class RecommendationRequest(BaseModel):
     limit: int = Field(default=6, ge=1, le=12)
 
 
-class ProfileSignals(BaseModel):
-    id: str
-    label: str
-    venue_entropy: float
-    category_entropy: float
-    weekend_delta: float
-    observation_count: int
-    confidence: float
-    familiar_categories: list[str]
-
-
 class Recommendation(BaseModel):
     id: str
     name: str
@@ -71,7 +60,7 @@ class Recommendation(BaseModel):
 
 
 class RecommendationResponse(BaseModel):
-    profile: ProfileSignals
+    profile: Profile
     context: Context
     discovery_mode: DiscoveryMode
     applied_discovery: float
