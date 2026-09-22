@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Glossary · Entropy Field Guide</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<header class="topbar"><div class="course-shell"><a class="brand" href="../index.html">Entropy Field Guide</a><nav class="topnav"><a href="solution-cheat-sheet.html">Cheat sheet</a><a href="numbers-and-findings.html">Numbers</a></nav></div></header><section class="hero"><div class="course-shell"><h1>Glossary</h1><p class="deck">Plain definitions for the terms used in the project.</p></div></section><main><div class="course-shell prose">
+<table><thead><tr><th>Term</th><th>Precise meaning here</th></tr></thead><tbody>
+<tr><td><strong>Check-in</strong></td><td>A voluntarily recorded Foursquare event. Not continuous presence, dwell time, purchase, demand, or footfall.</td></tr>
+<tr><td><strong>Location</strong></td><td>For the primary metric, a <code>venue_id</code>; for semantic diversity, a <code>category_id</code>.</td></tr>
+<tr><td><strong>Shannon entropy</strong></td><td><code>−Σ p log₂p</code>; variety plus evenness of a user's observed event distribution.</td></tr>
+<tr><td><strong>Bit</strong></td><td>Entropy unit when logarithm base 2 is used.</td></tr>
+<tr><td><strong>Raw entropy</strong></td><td>Entropy in bits. Its maximum grows with the number of observed locations <code>K</code>.</td></tr>
+<tr><td><strong>Normalized entropy</strong></td><td><code>H / log₂(K)</code>, set to zero for <code>K ≤ 1</code>. Measures evenness relative to the user's observed repertoire.</td></tr>
+<tr><td><strong>Observed repertoire</strong></td><td>The unique venues or categories appearing in this sample—not every place the person actually visits.</td></tr>
+<tr><td><strong>Exact duplicate</strong></td><td>A row identical across all eight raw source fields; removed to avoid double probability mass.</td></tr>
+<tr><td><strong>Composite user key</strong></td><td><code>(city, user_id)</code>. Bare IDs restart and overlap between city files.</td></tr>
+<tr><td><strong>Timezone-aware</strong></td><td>A timestamp carrying UTC or IANA timezone semantics, permitting correct city-local calendar derivation.</td></tr>
+<tr><td><strong>IQR</strong></td><td>Interquartile range, from the 25th to 75th percentile; robust spread around the median.</td></tr>
+<tr><td><strong>Rank correlation</strong></td><td>Correlation of ranks; captures monotonic association without assuming a linear relationship. It is not causation.</td></tr>
+<tr><td><strong>Paired comparison</strong></td><td>Weekend and weekday scores belong to the same user; analyze their within-user difference.</td></tr>
+<tr><td><strong>Bootstrap interval</strong></td><td>Percentiles of medians from user-level deltas resampled with replacement. Quantifies sampling variability conditional on this observed sample.</td></tr>
+<tr><td><strong>Sensitivity analysis</strong></td><td>Recompute after a defensible alternative choice—in this case removing <code>Home (private)</code>—to test conclusion robustness.</td></tr>
+<tr><td><strong>Routine-/exploration-oriented</strong></td><td>Relative within-city quartile labels for observed check-ins, not personality traits.</td></tr>
+<tr><td><strong>Observational</strong></td><td>Researchers did not assign treatments or control check-in generation; causal claims are unsupported.</td></tr>
+<tr><td><strong>Synthetic profile</strong></td><td>One of four fixed fictional check-in histories anchored to aggregate ranges. It is not a source user.</td></tr>
+<tr><td><strong>Profile entropy</strong></td><td>Normalized venue/category entropy attached to a synthetic observed history. It is never a venue score.</td></tr>
+<tr><td><strong>Confidence</strong></td><td>An illustrative [0,1] profile input controlling trust in inferred history patterns. It is not learned or calibrated here.</td></tr>
+<tr><td><strong>Applied discovery</strong></td><td>A bounded policy blend of explicit choice, confidence-adjusted profile diversity, and eligible weekend adjustment. Not a probability.</td></tr>
+<tr><td><strong>Aggregate popularity</strong></td><td>A venue's check-in-count percentile among eligible historical candidates.</td></tr>
+<tr><td><strong>Baseline relevance</strong></td><td>An illustrative transform of aggregate popularity, <code>0.35 + 0.60 × popularity</code>. Not measured personal relevance.</td></tr>
+<tr><td><strong>Aggregate candidate novelty</strong></td><td>One minus aggregate popularity percentile. Means less common in the historical sample—not new, good, or current.</td></tr>
+<tr><td><strong>Category familiarity</strong></td><td>Binary indicator that the candidate category occurs in the selected synthetic profile history.</td></tr>
+<tr><td><strong>Novelty score</strong></td><td><code>0.65 × aggregate novelty + 0.35 × category discovery</code>, where category discovery is one minus familiarity.</td></tr>
+<tr><td><strong>Neutral fallback</strong></td><td>Below 0.50 confidence, use 0.50 for the inferred profile portion and suppress weekend adjustment; explicit choice still operates.</td></tr>
+<tr><td><strong>Pseudonymous candidate</strong></td><td>A filtered aggregate historical venue record labeled by city/category/number with source identifiers removed.</td></tr>
+<tr><td><strong>Generated artifact</strong></td><td>Committed safe JSON/assets deterministically exported from the already-executed notebook and tied to its hash.</td></tr>
+<tr><td><strong>Deterministic ranker</strong></td><td>A hand-designed repeatable policy with no fitted model or randomness.</td></tr>
+<tr><td><strong>Claim boundary</strong></td><td>The explicit line separating observed evidence, interpretation, hypothesis, implementation behavior, and unvalidated outcomes.</td></tr>
+<tr><td><strong>Guardrail</strong></td><td>A metric that protects against harms while optimizing the primary KPI.</td></tr>
+</tbody></table>
+<div class="warning"><strong>Language discipline:</strong> say “observed check-in diversity,” not “mobility,” “personality,” or “how exploratory a city is.” Say profiles are synthetic, candidates are pseudonymous data-derived aggregates, and ranking is illustrative—not learned or validated.</div>
+</div></main></body></html>
